@@ -1,0 +1,150 @@
+{
+  "timer__message__A": {
+    "type": "string",
+    "title": "TIMER A message",
+    "description": "Message displayed when timer expired",
+    "default": "Timer A expired"
+  },
+  "timer__length__A": {
+    "type": "number",
+    "title": "TIMER A length (sec) ",
+    "default": 60,
+    "description": "timer length in seconds"
+  },
+  "timer__repeating__A": {
+    "type": "boolean",
+    "title": "TIMER A repeating itself",
+    "default": false,
+    "description": "Does timer is repeating itself"
+  },
+  "timer__message__B": {
+    "type": "string",
+    "title": "TIMER B message",
+    "description": "Message displayed when timer expired",
+    "default": "Timer B expired"
+  },
+  "timer__length__B": {
+    "type": "number",
+    "title": "TIMER B length (sec) ",
+    "default": 60,
+    "description": "timer length in seconds"
+  },
+  "timer__repeating__B": {
+    "type": "boolean",
+    "title": "TIMER B repeating itself",
+    "default": false,
+    "description": "Does timer is repeating itself"
+  },
+  "timer__message__C": {
+    "type": "string",
+    "title": "TIMER C message",
+    "description": "Message displayed when timer expired",
+    "default": "Timer C expired"
+  },
+  "timer__length__C": {
+    "type": "number",
+    "title": "TIMER C length (sec) ",
+    "default": 60,
+    "description": "timer length in seconds"
+  },
+  "timer__repeating__C": {
+    "type": "boolean",
+    "title": "TIMER C repeating itself",
+    "default": false,
+    "description": "Does timer is repeating itself"
+  },
+  "chatBadWords": {
+    "type": "string",
+    "title": "CHAT Bad words list",
+    "description": "List of words to be removed from chat",
+    "default": ""
+  },
+  "chatFuzzyScoreForBW": {
+    "type": "number",
+    "title": "CHAT Min Fuzzyness for bad words",
+    "default": 60,
+    "description": "Use fuzzy word search, min score to match (0-100, 0 to disable)"
+  },
+  "chatVeryBadWords": {
+    "type": "string",
+    "title": "CHAT Very bad words list",
+    "description": "Message containing those words will be spamed/deleted",
+    "default": ""
+  },
+  "chatFuzzyScoreForVBW": {
+    "type": "number",
+    "title": "CHAT Min Fuzzyness for very bad words",
+    "default": 60,
+    "description": "Use fuzzy word search, min score to match (0-100, 0 to disable)"
+  },
+  "chatNoticeToUserVBW": {
+    "type": "string",
+    "title": "CHAT notice to bad words user",
+    "description": "Notice sent to user using very bad words",
+    "default": "Be Polite, Please ! No bad words !"
+  },
+  "sessionMinTimeBetweenSession": {
+    "type": "number",
+    "title": "SESSION min time between different sessions (minutes)",
+    "description": "Minimum \"pause\" time between 2 sessions to create a new session",
+    "default": 120
+  },
+  "sessionMaxTimeToRejoin": {
+    "type": "number",
+    "title": "SESSION max time to rejoin the same session (minutes)",
+    "description": "Maximum time to rejoin a session and \"keep\" it",
+    "default": 30
+  },
+  "sessionMaxSessionLength": {
+    "type": "number",
+    "title": "SESSION Max session length/duration (minutes)",
+    "description": "Estimation of very maximum session lenght",
+    "default": 480
+  },
+  "cliBaseStaffCommand": {
+    "type": "string",
+    "title": "CLI Staff base command",
+    "minLength": 4,
+    "required": true,
+    "default": "!zeus",
+    "maxLength": 10,
+    "description": "Start of message when want to run staff/privileged commands"
+  },
+  "cliBaseUserCommand": {
+    "type": "string",
+    "description": "Start of message when want to run user command",
+    "required": true,
+    "title": "CLI User base command",
+    "minLength": 4,
+    "maxLength": 10,
+    "default": "!jarvis"
+  },
+  "debugAllowOwner": {
+    "type": "boolean",
+    "title": "DEBUG allow owner",
+    "default": false,
+    "description": "Allow room owner to issue debug commands"
+  },
+  "debugEnableRemoteUser": {
+    "type": "boolean",
+    "title": "DEBUG enable remote user",
+    "default": false,
+    "description": "Enabling remote user debug feature"
+  },
+  "debugAllowedUsernames": {
+    "type": "string",
+    "title": "DEBUG allowed remote users",
+    "minLength": 0,
+    "description": "Those users will be allowed to use debug commands"
+  },
+  "userStaffMembersAdmin": {
+    "type": "string",
+    "title": "STAFF admin users",
+    "description": "users allowed to use app admin commands"
+  },
+  "userStaffMembersMonitor": {
+    "type": "string",
+    "title": "STAFF monitor users",
+    "description": "users only allowed to monitor app"
+  }
+}
