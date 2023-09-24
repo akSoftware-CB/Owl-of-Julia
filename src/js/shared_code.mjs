@@ -3,13 +3,9 @@
 import { testRandomID } from "./command/command-test.mjs";
 import { NOTICE_COLOR_THEME, printCommandResult } from "./cli/cli-print.mjs";
 import { getRandomID } from "./tool/tool.mjs";
-
-// for commands
-const COMMAND_START_CHAR = '!'
-const BASE_STAFF_COMMAND = '!zeus'; // override possible in settings
-const BASE_USER_COMMAND = '!jarvis'; // override possible in settings
-
-const CB_SETTINGS_LIST_SEPARATOR = ',';
+import { SETTINGS_CONVERT, SETTINGS_INFO, getSettings, SETTINGS, updateSettings } from "./settings.mjs";
+import { COMMAND_START_CHAR, CB_SETTINGS_LIST_SEPARATOR } from "./defaults.mjs";
+import { KV_KEYS } from "./tool/kv.mjs";
 
 
 const LEET_TABLE = {
@@ -64,19 +60,7 @@ const AVAILLABLE_LIVE_SETTINGS_NAMES = ['01', '02', '03', '04', '05', '06', '07'
 // };
 
 
-const KV_KEYS = {
-    liveSettings:           'liveSettings',
-    sessionStartDate:       'sessionStartDate',
-    sessionLastEnterDate:   'sessionLastEnterDate',
-    sessionLastLeaveDate:   'sessionLastLeaveDate',
-    currentSession:         'currentSession',
-    sessionHistory:         'sessionHistory',
-    callbacksManager:       'callbacksManager',
-    userTipsKeysMap:        'userTipsKeysMap',
-    userChatKeysMap:        'userChatKeysMap',
-    currentGlobalStatsTS:   'currentGlobalStatsTS',
-    ModuleTimer:            'ModuleTimer',
-};
+
 
 
 const CB_USER_GROUPS = {
@@ -111,83 +95,7 @@ const DEFAULT_USER_RIGHTS = {
     monitor:  CAPABILITY.settingsShow | CAPABILITY.timerShow,
 }
 
-/*
-    Reminder using $settings:
-    Boolean : need to have forceUpdate:true
-    String : if not set, empty string. Need forceUpdate:true to get the empty string
-    Number : if not set, null. Need forceUpdate:true to get the null value
-    Dropdown : if not set, null. Need forceUpdate:true to get the null value. if set, get a String
-*/
-const SETTINGS_CONVERT = {
-    number:         'number',
-    listString:     'listString',
-    boolean:        'boolean',
-}
 
-const SETTINGS_INFO = {
-    cliBroadcastUserCmd:    {
-        defaultValue: false, desc: 'Broadcast User command to everyone in chat',
-        fromSettings:false, liveUpdate: true, convert:SETTINGS_CONVERT.boolean},
-    cliBroadcastStaffCmd:   {
-        defaultValue: false, desc: 'Broadcast Amdin command to everyone in chat', 
-        fromSettings:false},
-    cliBaseStaffCommand:        {
-        defaultValue: BASE_STAFF_COMMAND, fromSettings:true, 
-        desc: 'Command prefix for Staff commands'},
-    cliBaseUserCommand:         {
-        defaultValue: BASE_USER_COMMAND, fromSettings:true, 
-        desc: 'Command prefix for User commands'},
-    debugAllowedUsernames:  {
-        defaultValue: [], fromSettings:true, convert: SETTINGS_CONVERT.listString, 
-        desc: 'username of the user allowed to use debug commands'},
-    debugEnableRemoteUser:  {
-        defaultValue: false, fromSettings:true, 
-        desc: 'allowing a remote user to use debug commands'},
-    debugAllowOwner:  {
-        defaultValue: false, fromSettings:true, 
-        desc: 'allowing room owner to use debug commands'},
-    userStaffMembersAdmin: {
-        defaultValue: [], fromSettings:true, convert: SETTINGS_CONVERT.listString, 
-        desc: 'staff users allowed to use Staff/privileged commands'},
-    userStaffMembersMonitor: {
-        defaultValue: [], fromSettings:true, convert: SETTINGS_CONVERT.listString,
-        liveUpdate: true,
-        desc: 'staff users only allowed monitoring commands'},
-    sessionMinTimeBetweenSession: {
-        defaultValue: 2 * 60 , fromSettings:true, 
-        desc: 'Minimum time between 2 different sessions (default 2h)'},
-    sessionMaxTimeToRejoin: {
-        defaultValue: 30 , fromSettings:true, 
-        desc: 'Maximum time to rejoin a session, to keep same session (default 30min)'},
-    sessionMaxSessionLength: {
-        defaultValue: 8 * 60 , fromSettings:true, 
-        desc: 'How much time a session will last (default 8h)'},
-    sessionHistoryMaxLenght: {
-        defaultValue: 10 , fromSettings:false, 
-        desc: 'How many sessions to keep in history'},
-    chatBadWords: {
-        defaultValue: [], 
-        fromSettings:true, convert: SETTINGS_CONVERT.listString,
-        liveUpdate: false,
-        desc: 'words that will be removed from chat message'},
-    chatFuzzyScoreForBW: {
-        defaultValue: 60, fromSettings:true, liveUpdate: false,
-        desc: 'minimal fuzzy similarity score to consider word is BW, range 0-100, 0 to disable'},
-    chatVeryBadWords: {
-        defaultValue: [], 
-        fromSettings:true, convert: SETTINGS_CONVERT.listString,
-        liveUpdate: false,
-        desc: 'if chat message contains one of those words, message is spammed'},
-    chatFuzzyScoreForVBW: {
-        defaultValue: 60, fromSettings:true, liveUpdate: false,
-        desc: 'minimal fuzzy similarity score to consider word is VBW, range 0-100, 0 to disable'},
-    chatNoticeToUserVBW: {
-        defaultValue: 'Be Polite, Please ! No bad words !', 
-        fromSettings:true,
-        liveUpdate: false,
-        desc: 'Notice to send to user using very bad words'},
-            
-};
 
 // yes, staff, ajajaj better than admin, god, mods, or anything else
 const AVAILABLE_STAFF_COMMANDS = [
@@ -277,82 +185,7 @@ const CALLBACKS_INFO = {
 };
 
 
-function getSettings() {
-    let settings = {};
 
-    Object.entries(SETTINGS_INFO).forEach(([name, sInfo]) => {
-        const {defaultValue = null, desc = null, fromSettings = null, 
-                forceUpdate = null, liveUpdate = null, convert = null} = sInfo;
-        if (name) {
-            settings[name] = defaultValue;
-            if (fromSettings) {
-                let key = name;
-                switch (typeof fromSettings) {
-                    case "boolean":
-                        key = name;
-                        break;
-                    case "string":
-                        key = fromSettings;
-                        break;                    
-                    default:
-                        break;
-                }
-                try {
-                    // eslint-disable-next-line no-undef
-                    const v = $settings[key];
-                    if ( v || forceUpdate) {
-                        if (convert && v) {
-                            let c = null;
-                            let l = null;
-                            let nv = null;
-                            switch (convert) {
-                                case SETTINGS_CONVERT.number:
-                                    c = parseInt(v);
-                                    if (typeof c === 'number' && c) {
-                                        settings[name] = c;
-                                    } else {
-                                        settings[name] = defaultValue;
-                                    }
-                                    break;
-                                case SETTINGS_CONVERT.listString:
-                                    l = v.split(CB_SETTINGS_LIST_SEPARATOR);
-                                    nv = [];
-                                    l.forEach(u => {
-                                        nv.push(u.trim());
-                                    });
-                                    settings[name] = nv;
-                                    break;
-                                default:
-                                    settings[name] = v;
-                                    break;
-                            }
-                        } else {
-                            settings[name] = v;
-                        }
-                    }
-                }
-                catch (ReferenceError) {
-                    settings[name] = defaultValue;
-                }
-            }
-            if (liveUpdate) {
-                // eslint-disable-next-line no-undef
-                const liveSettings = $kv.get(KV_KEYS.liveSettings, {});
-                if (Object.hasOwn(liveSettings, name)) {
-                    const v = settings[name];
-                    const nv = liveSettings[name];
-                    if (Array.isArray(v) && Array.isArray(nv)) {
-                        settings[name] =  v.concat(nv);
-                    } else {
-                        settings[name] = nv;
-                    }
-                }
-            }
-        }
-    });
-
-    return settings;
-}
 
 function cliSettingShowSettings(ctx) {
     const { message = null, user = null, room = null, kv = null } = ctx;
@@ -2408,7 +2241,7 @@ pouet();
 // init SETTINGS global var
 ModuleTimer.extendSettings();
 ModuleTimer.extendCallback();
-let SETTINGS = SETTINGS_INFO;
-SETTINGS = getSettings()
-
+//let SETTINGS = SETTINGS_INFO;
+//SETTINGS = getSettings()
+updateSettings();
 

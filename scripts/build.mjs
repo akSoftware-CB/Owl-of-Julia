@@ -8,4 +8,5 @@ esbuild.build({
   platform: 'node',
   format: 'esm',
   outdir: 'dist',
+// eslint-disable-next-line no-undef
 }).catch(() => process.exit(1));

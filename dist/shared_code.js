@@ -40,14 +40,14 @@ function printCommandResult(ctx, message, theme = NOTICE_COLOR_THEME.staff) {
   room.sendNotice(message, p);
 }
 
-// src/js/tool/tool.mjs
+// src/js/tool/tool.mts
 function getRandomInt(min, max) {
   const tMin = Math.ceil(min);
   const tMax = Math.floor(max);
   return Math.floor(Math.random() * (tMax - tMin) + tMin);
 }
 function getRandomID(strengh = 2) {
-  let il = [];
+  const il = [];
   for (let index = 0; index < strengh; index++) {
     il.push(getRandomInt(0, 1048576));
   }
@@ -69,47 +69,13 @@ function testRandomID(ctx) {
   printCommandResult(ctx, m, NOTICE_COLOR_THEME.staff);
 }
 
-// src/js/shared_code.mjs
+// src/js/defaults.mts
 var COMMAND_START_CHAR = "!";
 var BASE_STAFF_COMMAND = "!zeus";
 var BASE_USER_COMMAND = "!jarvis";
 var CB_SETTINGS_LIST_SEPARATOR = ",";
-var LEET_TABLE = {
-  a: ["@", "4"],
-  b: ["8"],
-  c: ["("],
-  e: ["3"],
-  g: ["6"],
-  h: ["#"],
-  i: ["!", "1"],
-  l: ["1"],
-  o: ["0"],
-  s: ["$"],
-  t: ["7"],
-  z: ["2"]
-};
-var AVAILLABLE_LIVE_SETTINGS_NAMES = [
-  "01",
-  "02",
-  "03",
-  "04",
-  "05",
-  "06",
-  "07",
-  "08",
-  "09",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19",
-  "20"
-];
+
+// src/js/tool/kv.mts
 var KV_KEYS = {
   liveSettings: "liveSettings",
   sessionStartDate: "sessionStartDate",
@@ -123,33 +89,8 @@ var KV_KEYS = {
   currentGlobalStatsTS: "currentGlobalStatsTS",
   ModuleTimer: "ModuleTimer"
 };
-var CB_USER_GROUPS = {
-  owner: { userColor: "o" },
-  moderator: { userColor: "m", noticeColor: "red" },
-  fanclub: { userColor: "f", noticeColor: "green" },
-  darkPurple: { userColor: "l", noticeColor: "darkpurple" },
-  lightPurple: { userColor: "p", noticeColor: "lightpurple" },
-  darkBlue: { userColor: "tr", noticeColor: "darkblue" },
-  lightBlue: { userColor: "t", noticeColor: "lightblue" },
-  grey: { userColor: "g", noticeColor: "red" }
-};
-var CAPABILITY = {
-  none: 0,
-  debugShow: 2,
-  debugChange: 4,
-  settingsShow: 8,
-  settingsSet: 16,
-  statShow: 32,
-  timerAdmin: 64,
-  timerShow: 128
-};
-var DEFAULT_USER_RIGHTS = {
-  guru: 4294967295,
-  debug: CAPABILITY.debugShow | CAPABILITY.debugChange,
-  owner: CAPABILITY.settingsShow | CAPABILITY.settingsSet | CAPABILITY.statShow | CAPABILITY.timerAdmin | CAPABILITY.timerShow,
-  admin: CAPABILITY.settingsShow | CAPABILITY.settingsSet | CAPABILITY.statShow | CAPABILITY.timerAdmin | CAPABILITY.timerShow,
-  monitor: CAPABILITY.settingsShow | CAPABILITY.timerShow
-};
+
+// src/js/settings.mts
 var SETTINGS_CONVERT = {
   number: "number",
   listString: "listString",
@@ -259,6 +200,154 @@ var SETTINGS_INFO = {
     liveUpdate: false,
     desc: "Notice to send to user using very bad words"
   }
+};
+function getSettings() {
+  const settings = {};
+  Object.entries(SETTINGS_INFO).forEach(([n, sInfo]) => {
+    const {
+      defaultValue = null,
+      desc = null,
+      fromSettings = null,
+      forceUpdate = null,
+      liveUpdate = null,
+      convert = null
+    } = sInfo;
+    const name = n;
+    if (name) {
+      settings[name] = defaultValue;
+      if (fromSettings) {
+        let key = name;
+        switch (typeof fromSettings) {
+          case "boolean":
+            key = name;
+            break;
+          case "string":
+            key = fromSettings;
+            break;
+          default:
+            break;
+        }
+        try {
+          const v = $settings[key];
+          if (v || forceUpdate) {
+            if (convert && v) {
+              let c = null;
+              let l = null;
+              let nv = null;
+              switch (convert) {
+                case SETTINGS_CONVERT.number:
+                  c = parseInt(v);
+                  if (typeof c === "number" && c) {
+                    settings[name] = c;
+                  } else {
+                    settings[name] = defaultValue;
+                  }
+                  break;
+                case SETTINGS_CONVERT.listString:
+                  l = v.split(CB_SETTINGS_LIST_SEPARATOR);
+                  nv = [];
+                  l.forEach((u) => {
+                    nv.push(u.trim());
+                  });
+                  settings[name] = nv;
+                  break;
+                default:
+                  settings[name] = v;
+                  break;
+              }
+            } else {
+              settings[name] = v;
+            }
+          }
+        } catch (ReferenceError) {
+          settings[name] = defaultValue;
+        }
+      }
+      if (liveUpdate) {
+        const liveSettings = $kv.get(KV_KEYS.liveSettings, {});
+        if (Object.hasOwn(liveSettings, name)) {
+          const v = settings[name];
+          const nv = liveSettings[name];
+          if (Array.isArray(v) && Array.isArray(nv)) {
+            settings[name] = v.concat(nv);
+          } else {
+            settings[name] = nv;
+          }
+        }
+      }
+    }
+  });
+  return settings;
+}
+function updateSettings() {
+  SETTINGS = getSettings();
+}
+var SETTINGS = SETTINGS_INFO;
+updateSettings();
+
+// src/js/shared_code.mjs
+var LEET_TABLE = {
+  a: ["@", "4"],
+  b: ["8"],
+  c: ["("],
+  e: ["3"],
+  g: ["6"],
+  h: ["#"],
+  i: ["!", "1"],
+  l: ["1"],
+  o: ["0"],
+  s: ["$"],
+  t: ["7"],
+  z: ["2"]
+};
+var AVAILLABLE_LIVE_SETTINGS_NAMES = [
+  "01",
+  "02",
+  "03",
+  "04",
+  "05",
+  "06",
+  "07",
+  "08",
+  "09",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20"
+];
+var CB_USER_GROUPS = {
+  owner: { userColor: "o" },
+  moderator: { userColor: "m", noticeColor: "red" },
+  fanclub: { userColor: "f", noticeColor: "green" },
+  darkPurple: { userColor: "l", noticeColor: "darkpurple" },
+  lightPurple: { userColor: "p", noticeColor: "lightpurple" },
+  darkBlue: { userColor: "tr", noticeColor: "darkblue" },
+  lightBlue: { userColor: "t", noticeColor: "lightblue" },
+  grey: { userColor: "g", noticeColor: "red" }
+};
+var CAPABILITY = {
+  none: 0,
+  debugShow: 2,
+  debugChange: 4,
+  settingsShow: 8,
+  settingsSet: 16,
+  statShow: 32,
+  timerAdmin: 64,
+  timerShow: 128
+};
+var DEFAULT_USER_RIGHTS = {
+  guru: 4294967295,
+  debug: CAPABILITY.debugShow | CAPABILITY.debugChange,
+  owner: CAPABILITY.settingsShow | CAPABILITY.settingsSet | CAPABILITY.statShow | CAPABILITY.timerAdmin | CAPABILITY.timerShow,
+  admin: CAPABILITY.settingsShow | CAPABILITY.settingsSet | CAPABILITY.statShow | CAPABILITY.timerAdmin | CAPABILITY.timerShow,
+  monitor: CAPABILITY.settingsShow | CAPABILITY.timerShow
 };
 var AVAILABLE_STAFF_COMMANDS = [
   { name: "debug", subCommand: "perfkv", capabilities: CAPABILITY.guru, func: testPerfKV, help: "some KV perf testing" },
@@ -486,83 +575,6 @@ var CALLBACKS_INFO = {
     defaultRepeating: true
   }
 };
-function getSettings() {
-  let settings = {};
-  Object.entries(SETTINGS_INFO).forEach(([name, sInfo]) => {
-    const {
-      defaultValue = null,
-      desc = null,
-      fromSettings = null,
-      forceUpdate = null,
-      liveUpdate = null,
-      convert = null
-    } = sInfo;
-    if (name) {
-      settings[name] = defaultValue;
-      if (fromSettings) {
-        let key = name;
-        switch (typeof fromSettings) {
-          case "boolean":
-            key = name;
-            break;
-          case "string":
-            key = fromSettings;
-            break;
-          default:
-            break;
-        }
-        try {
-          const v = $settings[key];
-          if (v || forceUpdate) {
-            if (convert && v) {
-              let c = null;
-              let l = null;
-              let nv = null;
-              switch (convert) {
-                case SETTINGS_CONVERT.number:
-                  c = parseInt(v);
-                  if (typeof c === "number" && c) {
-                    settings[name] = c;
-                  } else {
-                    settings[name] = defaultValue;
-                  }
-                  break;
-                case SETTINGS_CONVERT.listString:
-                  l = v.split(CB_SETTINGS_LIST_SEPARATOR);
-                  nv = [];
-                  l.forEach((u) => {
-                    nv.push(u.trim());
-                  });
-                  settings[name] = nv;
-                  break;
-                default:
-                  settings[name] = v;
-                  break;
-              }
-            } else {
-              settings[name] = v;
-            }
-          }
-        } catch (ReferenceError) {
-          settings[name] = defaultValue;
-        }
-      }
-      if (liveUpdate) {
-        const liveSettings = $kv.get(KV_KEYS.liveSettings, {});
-        if (Object.hasOwn(liveSettings, name)) {
-          const v = settings[name];
-          const nv = liveSettings[name];
-          if (Array.isArray(v) && Array.isArray(nv)) {
-            settings[name] = v.concat(nv);
-          } else {
-            settings[name] = nv;
-          }
-        }
-      }
-    }
-  });
-  return settings;
-}
 function cliSettingShowSettings(ctx) {
   const { message = null, user = null, room = null, kv = null } = ctx;
   printCommandResult(ctx, JSON.stringify(SETTINGS, null, "	"), NOTICE_COLOR_THEME.staff);
@@ -2202,5 +2214,4 @@ function pouet() {
 pouet();
 ModuleTimer.extendSettings();
 ModuleTimer.extendCallback();
-var SETTINGS = SETTINGS_INFO;
-SETTINGS = getSettings();
+updateSettings();
