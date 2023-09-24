@@ -1,0 +1,27 @@
+{
+  "name": "owl-of-julia",
+  "version": "0.0.1",
+  "description": "Owl of Julia",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "./scripts/build.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akSoftware-CB/Owl-of-Julia.git"
+  },
+  "author": "AKsoftware",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/akSoftware-CB/Owl-of-Julia/issues"
+  },
+  "homepage": "https://github.com/akSoftware-CB/Owl-of-Julia#readme",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.7.2",
+    "@typescript-eslint/parser": "^6.7.2",
+    "esbuild": "0.19.3",
+    "eslint": "^8.50.0"
+  }
+}

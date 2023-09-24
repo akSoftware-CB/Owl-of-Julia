@@ -1,4 +1,9 @@
 
+
+import { testRandomID } from "./command/command-test.mjs";
+import { NOTICE_COLOR_THEME, printCommandResult } from "./cli/cli-print.mjs";
+import { getRandomID } from "./tool/tool.mjs";
+
 // for commands
 const COMMAND_START_CHAR = '!'
 const BASE_STAFF_COMMAND = '!zeus'; // override possible in settings
@@ -25,38 +30,38 @@ const LEET_TABLE = {
 const AVAILLABLE_LIVE_SETTINGS_NAMES = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10',
                                         '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', ]
 
-const NOTICE_COLOR_THEME = {
-    staff: {    
-        color: 'Black',
-        bgColor: 'LightSteelBlue',
-        fontWeight: 'normal',
-    },
-    user: {    
-        color: 'Black',
-        bgColor: 'HotPink',
-        fontWeight: 'normal',
-    },
-    error: {    
-        color: 'White',
-        bgColor: 'Crimson',
-        fontWeight: 'normal',
-    },
-    userError: {    
-        color: 'White',
-        bgColor: 'Crimson',
-        fontWeight: 'bold',
-    },
-    help: {    
-        color: 'Black',
-        bgColor: 'Lavender',
-        fontWeight: 'normal',
-    },
-    timer: {    
-        color: 'Black',
-        bgColor: 'linear-gradient(to right, rgba(255, 102, 34, 0) 5%, rgba(255, 102, 34, 0.2) 20%, rgba(255, 102, 34, 0.4) 73%, rgba(255, 102, 34, 0.2))',
-        fontWeight: 'normal',
-    },    
-};
+// const NOTICE_COLOR_THEME = {
+//     staff: {    
+//         color: 'Black',
+//         bgColor: 'LightSteelBlue',
+//         fontWeight: 'normal',
+//     },
+//     user: {    
+//         color: 'Black',
+//         bgColor: 'HotPink',
+//         fontWeight: 'normal',
+//     },
+//     error: {    
+//         color: 'White',
+//         bgColor: 'Crimson',
+//         fontWeight: 'normal',
+//     },
+//     userError: {    
+//         color: 'White',
+//         bgColor: 'Crimson',
+//         fontWeight: 'bold',
+//     },
+//     help: {    
+//         color: 'Black',
+//         bgColor: 'Lavender',
+//         fontWeight: 'normal',
+//     },
+//     timer: {    
+//         color: 'Black',
+//         bgColor: 'linear-gradient(to right, rgba(255, 102, 34, 0) 5%, rgba(255, 102, 34, 0.2) 20%, rgba(255, 102, 34, 0.4) 73%, rgba(255, 102, 34, 0.2))',
+//         fontWeight: 'normal',
+//     },    
+// };
 
 
 const KV_KEYS = {
@@ -653,16 +658,16 @@ function cliTimerListTimers(ctx) {
     printCommandResult(ctx, msg, NOTICE_COLOR_THEME.staff);
 }
 
-function printCommandResult(ctx, message, theme = NOTICE_COLOR_THEME.staff) {
-    const {user = null, room = null, kv = null } = ctx;
+// function printCommandResult(ctx, message, theme = NOTICE_COLOR_THEME.staff) {
+//     const {user = null, room = null, kv = null } = ctx;
 
-    const p = {
-        ...theme,
-        toUsername: user.username,
-    };
+//     const p = {
+//         ...theme,
+//         toUsername: user.username,
+//     };
 
-    room.sendNotice(message, p);
-}
+//     room.sendNotice(message, p);
+// }
 
 function printToOwner(ctx, message, theme = NOTICE_COLOR_THEME.staff) {
     const {user = null, room = null, kv = null } = ctx;
@@ -2173,25 +2178,25 @@ function logIt(message) {
 }
 
 
-function getRandomInt(min, max) {
-    const tMin = Math.ceil(min);
-    const tMax = Math.floor(max);
-    return Math.floor(Math.random() * (tMax - tMin) + tMin); // The maximum is exclusive and the minimum is inclusive
-}
+// function getRandomInt(min, max) {
+//     const tMin = Math.ceil(min);
+//     const tMax = Math.floor(max);
+//     return Math.floor(Math.random() * (tMax - tMin) + tMin); // The maximum is exclusive and the minimum is inclusive
+// }
   
-function getRandomID(strengh = 2) {
-    let il = [];
-    for (let index = 0; index < strengh; index++) {
-        il.push(getRandomInt(0, 0x100000));
-    }    
+// function getRandomID(strengh = 2) {
+//     let il = [];
+//     for (let index = 0; index < strengh; index++) {
+//         il.push(getRandomInt(0, 0x100000));
+//     }    
 
-    let id = '';
-    il.forEach(element => {
-        id = id + element.toString(16);
-    });
+//     let id = '';
+//     il.forEach(element => {
+//         id = id + element.toString(16);
+//     });
 
-    return id;
-}
+//     return id;
+// }
 
 function getObjectProperty(obj, prop, defaultValue = null, updateObject = true) {
     if (Object.hasOwn(obj, prop)) {
@@ -2315,16 +2320,16 @@ function testExtendClass(ctx) {
     let m = ModuleChatFilter.getFromKV(ctx);
 }
 
-function testRandomID(ctx) {
-    const { message = null, user = null, room = null, kv = null } = ctx;
+// function testRandomID(ctx) {
+//     const { message = null, user = null, room = null, kv = null } = ctx;
 
-    let m = getRandomID();
-    printCommandResult(ctx,m, NOTICE_COLOR_THEME.staff);
-    m = getRandomID(4);
-    printCommandResult(ctx,m, NOTICE_COLOR_THEME.staff);
-    m = getRandomID(8);
-    printCommandResult(ctx,m, NOTICE_COLOR_THEME.staff);
-}
+//     let m = getRandomID();
+//     printCommandResult(ctx,m, NOTICE_COLOR_THEME.staff);
+//     m = getRandomID(4);
+//     printCommandResult(ctx,m, NOTICE_COLOR_THEME.staff);
+//     m = getRandomID(8);
+//     printCommandResult(ctx,m, NOTICE_COLOR_THEME.staff);
+// }
 
 
 function testPrintKV(ctx) {
@@ -2383,8 +2388,23 @@ function testPerfKV(ctx) {
 }
 
 
+function pouet() {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+    var CBentryPoints = [
+        onAppStart,
+        onAppStop,
+        onBroadcastStart,
+        onBroadcastStop,
+        onCallback,
+        onMessage,
+        onMessageTransform,
+        onTipReceived,
+        onUserEnter,
+        onUserLeave,
+    ]; 
+}
 
-
+pouet();
 // init SETTINGS global var
 ModuleTimer.extendSettings();
 ModuleTimer.extendCallback();
