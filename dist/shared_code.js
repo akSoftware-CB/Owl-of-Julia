@@ -722,7 +722,12 @@ var UserChatInfo = class _UserChatInfo {
 function logIt(message) {
   const stack = new Error().stack;
   const caller = stack.split("\n")[2].trim().split(/\s+/)[1];
-  console.log(message + "\nCaller ----> " + caller);
+  if (typeof message === "object") {
+    console.log(message);
+    console.log("Caller ----> " + caller);
+  } else {
+    console.log(message + "\nCaller ----> " + caller);
+  }
 }
 
 // src/js/session-management.mts

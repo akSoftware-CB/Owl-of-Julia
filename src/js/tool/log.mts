@@ -9,7 +9,12 @@ function logIt(message: unknown) {
  //   console.log(stack);
 //    console.log(stack + "----\n" + caller + "----\n" + message);
 //    console.log(message + "\nCaller ----> " + caller + "\nStack ----V\n" + stack);
-    console.log(message + "\nCaller ----> " + caller);
+    if (typeof message === "object") {
+        console.log(message);
+        console.log("Caller ----> " + caller);
+    } else {
+        console.log(message + "\nCaller ----> " + caller);
+    }
 }
 
 export {logIt};
