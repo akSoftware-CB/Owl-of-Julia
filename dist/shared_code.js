@@ -944,8 +944,7 @@ var CallbacksManager = class _CallbacksManager {
     if (aInfo) {
       const bInfo = getObjectProperty(CALLBACKS_INFO, aInfo.baseCallback, null);
       if (bInfo && bInfo.func) {
-        console.log(aInfo);
-        logIt(Date.now());
+        logIt(aInfo);
         if (!aInfo.defaultRepeating) {
           delete this.activeCallbacks[label];
           this.storeToKV(ctx);
@@ -2139,7 +2138,6 @@ function extendAvaillableStaffCommands(commandList) {
   commandList.forEach((command) => {
     AVAILABLE_STAFF_COMMANDS2.push(command);
   });
-  console.log(AVAILABLE_STAFF_COMMANDS2);
 }
 function extendAvaillableUserCommands(commandList) {
   commandList.forEach((command) => {

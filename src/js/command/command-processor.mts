@@ -48,7 +48,6 @@ function extendAvaillableStaffCommands(commandList: CommandInfoStore) {
     commandList.forEach(command => {
         AVAILABLE_STAFF_COMMANDS.push(command);
     });
-    console.log(AVAILABLE_STAFF_COMMANDS);
 }
 
 function extendAvaillableUserCommands(commandList: CommandInfoStore) {

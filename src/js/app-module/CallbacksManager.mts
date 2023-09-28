@@ -155,8 +155,7 @@ class CallbacksManager {
         if (aInfo) {
             const bInfo = getObjectProperty(CALLBACKS_INFO, aInfo.baseCallback, null);
             if (bInfo && bInfo.func) {
-                console.log(aInfo);
-                logIt(Date.now());
+                logIt(aInfo);
                 if (!aInfo.defaultRepeating) {
                     delete this.activeCallbacks[label];
                     this.storeToKV(ctx);
