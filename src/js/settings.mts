@@ -3,9 +3,27 @@ import { BASE_STAFF_COMMAND, BASE_USER_COMMAND, CB_SETTINGS_LIST_SEPARATOR } fro
 import { KV_KEYS } from "./tool/kv.mjs";
 
 
-type SettingsInfoObj = {
-    [key: string]: SettingInfo; // variable key
-  };
+interface SettingsInfoObj {
+    cliBroadcastUserCmd: SettingInfo,
+    cliBroadcastStaffCmd: SettingInfo,
+    cliBaseStaffCommand: SettingInfo,
+    cliBaseUserCommand: SettingInfo,
+    debugAllowedUsernames: SettingInfo,
+    debugEnableRemoteUser: SettingInfo,
+    debugAllowOwner:   SettingInfo,
+    userStaffMembersAdmin:  SettingInfo,
+    userStaffMembersMonitor:  SettingInfo,
+    sessionMinTimeBetweenSession:  SettingInfo,
+    sessionMaxTimeToRejoin:  SettingInfo,
+    sessionMaxSessionLength:  SettingInfo,
+    sessionHistoryMaxLength:  SettingInfo,
+    chatBadWords:  SettingInfo,
+    chatFuzzyScoreForBW:  SettingInfo,
+    chatVeryBadWords:  SettingInfo,
+    chatFuzzyScoreForVBW:  SettingInfo,
+    chatNoticeToUserVBW:  SettingInfo,
+    [key: string]: SettingInfo, // variable key
+  }
 
 interface SettingInfo {
     defaultValue: unknown, 
@@ -16,10 +34,31 @@ interface SettingInfo {
     convert?: unknown,    
 }
 
-type Settings = {
+interface Settings{
+    cliBroadcastUserCmd: boolean,
+    cliBroadcastStaffCmd: boolean,
+    cliBaseStaffCommand: string,
+    cliBaseUserCommand: string,
+    debugAllowedUsernames: unknown,
+    debugEnableRemoteUser: unknown,
+    debugAllowOwner:   unknown,
+    userStaffMembersAdmin:  unknown,
+    userStaffMembersMonitor:  unknown,
+    sessionMinTimeBetweenSession:  number,
+    sessionMaxTimeToRejoin:  number,
+    sessionMaxSessionLength:  number,
+    sessionHistoryMaxLength:  number,
+    chatBadWords:  string[],
+    chatFuzzyScoreForBW:  number,
+    chatVeryBadWords:  string[],
+    chatFuzzyScoreForVBW:  number,
+    chatNoticeToUserVBW:  unknown,
     [key: string]: unknown,
-  };
+}
 
+interface LiveSettings{
+    [key: string]: unknown,
+}
 
 /*
     Reminder using $settings:
@@ -72,7 +111,7 @@ const SETTINGS_INFO: SettingsInfoObj = {
     sessionMaxSessionLength: {
         defaultValue: 8 * 60 , fromSettings:true, 
         desc: 'How much time a session will last (default 8h)'},
-    sessionHistoryMaxLenght: {
+    sessionHistoryMaxLength: {
         defaultValue: 10 , fromSettings:false, 
         desc: 'How many sessions to keep in history'},
     chatBadWords: {
@@ -99,7 +138,9 @@ const SETTINGS_INFO: SettingsInfoObj = {
             
 };
 
-function getSettings() {
+function getSettings(): Settings {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     const settings: Settings = {};
 
     Object.entries(SETTINGS_INFO).forEach(([n, sInfo]) => {
@@ -185,7 +226,11 @@ function updateSettings() {
     SETTINGS = getSettings()
 }
 
-let SETTINGS: SettingsInfoObj | Settings = SETTINGS_INFO;
+let SETTINGS: Settings = getSettings();
 updateSettings();
 
-export {SETTINGS_CONVERT, SETTINGS_INFO, getSettings, SETTINGS, updateSettings};
+export {
+    SettingInfo, LiveSettings,
+    SETTINGS_CONVERT, SETTINGS_INFO, SETTINGS, 
+    getSettings, updateSettings
+};

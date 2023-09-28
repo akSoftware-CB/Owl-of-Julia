@@ -3,7 +3,7 @@
 import * as esbuild from 'esbuild';
 
 esbuild.build({
-  entryPoints: ['src/js/shared_code.mjs'],
+  entryPoints: ['src/js/shared_code.mts'],
   bundle: true,
   platform: 'node',
   format: 'esm',

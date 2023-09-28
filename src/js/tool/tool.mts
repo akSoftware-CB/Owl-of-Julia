@@ -1,4 +1,8 @@
 
+type EpochMs = number;
+
+type GenericID = string;
+type SessionID = GenericID;
 
 function getRandomInt(min: number, max: number) {
     const tMin = Math.ceil(min);
@@ -6,7 +10,7 @@ function getRandomInt(min: number, max: number) {
     return Math.floor(Math.random() * (tMax - tMin) + tMin); // The maximum is exclusive and the minimum is inclusive
 }
   
-export function getRandomID(strengh = 2) {
+function getRandomID(strengh = 2): GenericID {
     const il: number[] = [];
     for (let index = 0; index < strengh; index++) {
         il.push(getRandomInt(0, 0x100000));
@@ -18,4 +22,25 @@ export function getRandomID(strengh = 2) {
     });
 
     return id;
+}
+
+function getObjectProperty(obj: object, prop: string, defaultValue: unknown = null, updateObject = true) {
+    if (Object.hasOwn(obj, prop)) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        return obj[prop];
+    } else {
+        if (updateObject) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //@ts-ignore
+            obj[prop] = defaultValue;
+        }
+        return defaultValue;
+    }
+}
+
+
+export {getRandomID, EpochMs, SessionID, GenericID, getObjectProperty};
+export interface KeyMap {
+    [key: string]: GenericID;
 }

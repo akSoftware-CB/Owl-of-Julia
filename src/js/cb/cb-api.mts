@@ -1,27 +1,91 @@
 
-type CBSettings = {
-    [key: string]: string | boolean | number,
+
+const CB_USER_GROUPS = {
+    owner:          {userColor: 'o'},
+    moderator:      {userColor: 'm',    noticeColor: 'red'},
+    fanclub:        {userColor: 'f',    noticeColor: 'green'},
+    darkPurple:     {userColor: 'l',    noticeColor: 'darkpurple'},
+    lightPurple:    {userColor: 'p',    noticeColor: 'lightpurple'},
+    darkBlue:       {userColor: 'tr',   noticeColor: 'darkblue'},
+    lightBlue:      {userColor: 't',    noticeColor: 'lightblue'},
+    grey:           {userColor: 'g',    noticeColor: 'red'},
 };
 
-type CBObj = {
-[key: string]: unknown | typeof cbFunction,
-};
+
+interface CBcontext {
+    app: CBObjApp,
+    callback: CBObjCallback,
+    kv: CBObjKV, 
+    message: CBObjMessage,     
+    room: CBObjRoom, 
+    tip: CBObj, 
+    user: CBObjUser, 
+}
+
+// interface CBSettings {
+//     [key: string]: string | boolean | number,
+// }
+
+interface CBObjApp {
+    name: string,
+    version: string,
+}
+
+interface CBObjCallback {
+    create: cbFunction,
+    cancel: cbFunction,
+    label: string,
+}
+
+interface CBObjKV {
+    get: cbFunction,
+    set: cbFunction,
+    remove: cbFunction,
+    clear: cbFunction,
+}
+
+interface CBObjMessage {
+    setSpam: cbFunction,
+    setBody: cbFunction,
+    orig: string,
+}
+
+interface CBObjRoom {
+    sendNotice: cbFunction,
+    owner: string,
+}
+
+interface CBObjUser {
+    colorGroup: string,
+    isOwner: boolean,
+    username: string,
+}
+
+interface CBObj {
+    get: cbFunction,
+    set: cbFunction,
+    remove: cbFunction,
+    sendNotice: cbFunction,
+    [key: string]: unknown | cbFunction,
+}
+
+type cbFunction = (..._args: unknown[]) => unknown;
 
 // interface Example {
 //     func(...args: any[]): void;
 // }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function cbFunction(..._args: unknown[]): unknown {
-    return false
-}
+// function cbFunction(..._args: unknown[]): unknown {
+//     return false
+// }
 
 
-const $settingshelper: CBSettings = {};
+// const $settingshelper: CBSettings = {};
 
-const $kvhelper: CBObj = {
-    //get: (...) => {return null;},
-    get: cbFunction,
-}
+// const $kvhelper: CBObj = {
+//     //get: (...) => {return null;},
+//     get: cbFunction,
+// }
 
-export {$settingshelper, $kvhelper};
+export {CBcontext, CB_USER_GROUPS, CBObjUser};

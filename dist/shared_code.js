@@ -1,4 +1,16 @@
-// src/js/cli/cli-print.mjs
+// src/js/cb/cb-api.mts
+var CB_USER_GROUPS = {
+  owner: { userColor: "o" },
+  moderator: { userColor: "m", noticeColor: "red" },
+  fanclub: { userColor: "f", noticeColor: "green" },
+  darkPurple: { userColor: "l", noticeColor: "darkpurple" },
+  lightPurple: { userColor: "p", noticeColor: "lightpurple" },
+  darkBlue: { userColor: "tr", noticeColor: "darkblue" },
+  lightBlue: { userColor: "t", noticeColor: "lightblue" },
+  grey: { userColor: "g", noticeColor: "red" }
+};
+
+// src/js/cli/cli-print.mts
 var NOTICE_COLOR_THEME = {
   staff: {
     color: "Black",
@@ -32,41 +44,35 @@ var NOTICE_COLOR_THEME = {
   }
 };
 function printCommandResult(ctx, message, theme = NOTICE_COLOR_THEME.staff) {
-  const { user = null, room = null, kv = null } = ctx;
+  const { user, room, kv = null } = ctx;
   const p = {
     ...theme,
     toUsername: user.username
   };
   room.sendNotice(message, p);
 }
-
-// src/js/tool/tool.mts
-function getRandomInt(min, max) {
-  const tMin = Math.ceil(min);
-  const tMax = Math.floor(max);
-  return Math.floor(Math.random() * (tMax - tMin) + tMin);
+function printToOwner(ctx, message, theme = NOTICE_COLOR_THEME.staff) {
+  const { user, room, kv = null } = ctx;
+  const p = {
+    ...theme,
+    toUsername: room.owner
+  };
+  room.sendNotice(message, p);
 }
-function getRandomID(strengh = 2) {
-  const il = [];
-  for (let index = 0; index < strengh; index++) {
-    il.push(getRandomInt(0, 1048576));
-  }
-  let id = "";
-  il.forEach((element) => {
-    id = id + element.toString(16);
-  });
-  return id;
+function printToUser(ctx, message, username, theme = NOTICE_COLOR_THEME.userError) {
+  const { user = null, room, kv = null } = ctx;
+  const p = {
+    ...theme,
+    toUsername: username
+  };
+  room.sendNotice(message, p);
 }
-
-// src/js/command/command-test.mjs
-function testRandomID(ctx) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  let m = getRandomID();
-  printCommandResult(ctx, m, NOTICE_COLOR_THEME.staff);
-  m = getRandomID(4);
-  printCommandResult(ctx, m, NOTICE_COLOR_THEME.staff);
-  m = getRandomID(8);
-  printCommandResult(ctx, m, NOTICE_COLOR_THEME.staff);
+function printToEveryone(ctx, message, theme = NOTICE_COLOR_THEME.user) {
+  const { user = null, room, kv = null } = ctx;
+  const p = {
+    ...theme
+  };
+  room.sendNotice(message, p);
 }
 
 // src/js/defaults.mts
@@ -74,6 +80,28 @@ var COMMAND_START_CHAR = "!";
 var BASE_STAFF_COMMAND = "!zeus";
 var BASE_USER_COMMAND = "!jarvis";
 var CB_SETTINGS_LIST_SEPARATOR = ",";
+var AVAILLABLE_LIVE_SETTINGS_NAMES = [
+  "01",
+  "02",
+  "03",
+  "04",
+  "05",
+  "06",
+  "07",
+  "08",
+  "09",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20"
+];
 
 // src/js/tool/kv.mts
 var KV_KEYS = {
@@ -163,7 +191,7 @@ var SETTINGS_INFO = {
     fromSettings: true,
     desc: "How much time a session will last (default 8h)"
   },
-  sessionHistoryMaxLenght: {
+  sessionHistoryMaxLength: {
     defaultValue: 10,
     fromSettings: false,
     desc: "How many sessions to keep in history"
@@ -282,625 +310,424 @@ function getSettings() {
 function updateSettings() {
   SETTINGS = getSettings();
 }
-var SETTINGS = SETTINGS_INFO;
+var SETTINGS = getSettings();
 updateSettings();
 
-// src/js/shared_code.mjs
-var LEET_TABLE = {
-  a: ["@", "4"],
-  b: ["8"],
-  c: ["("],
-  e: ["3"],
-  g: ["6"],
-  h: ["#"],
-  i: ["!", "1"],
-  l: ["1"],
-  o: ["0"],
-  s: ["$"],
-  t: ["7"],
-  z: ["2"]
-};
-var AVAILLABLE_LIVE_SETTINGS_NAMES = [
-  "01",
-  "02",
-  "03",
-  "04",
-  "05",
-  "06",
-  "07",
-  "08",
-  "09",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19",
-  "20"
-];
-var CB_USER_GROUPS = {
-  owner: { userColor: "o" },
-  moderator: { userColor: "m", noticeColor: "red" },
-  fanclub: { userColor: "f", noticeColor: "green" },
-  darkPurple: { userColor: "l", noticeColor: "darkpurple" },
-  lightPurple: { userColor: "p", noticeColor: "lightpurple" },
-  darkBlue: { userColor: "tr", noticeColor: "darkblue" },
-  lightBlue: { userColor: "t", noticeColor: "lightblue" },
-  grey: { userColor: "g", noticeColor: "red" }
-};
-var CAPABILITY = {
-  none: 0,
-  debugShow: 2,
-  debugChange: 4,
-  settingsShow: 8,
-  settingsSet: 16,
-  statShow: 32,
-  timerAdmin: 64,
-  timerShow: 128
-};
-var DEFAULT_USER_RIGHTS = {
-  guru: 4294967295,
-  debug: CAPABILITY.debugShow | CAPABILITY.debugChange,
-  owner: CAPABILITY.settingsShow | CAPABILITY.settingsSet | CAPABILITY.statShow | CAPABILITY.timerAdmin | CAPABILITY.timerShow,
-  admin: CAPABILITY.settingsShow | CAPABILITY.settingsSet | CAPABILITY.statShow | CAPABILITY.timerAdmin | CAPABILITY.timerShow,
-  monitor: CAPABILITY.settingsShow | CAPABILITY.timerShow
-};
-var AVAILABLE_STAFF_COMMANDS = [
-  { name: "debug", subCommand: "perfkv", capabilities: CAPABILITY.guru, func: testPerfKV, help: "some KV perf testing" },
-  {
-    name: "debug",
-    subCommand: "clearKV",
-    capabilities: CAPABILITY.debugChange,
-    func: debugClearKV,
-    help: "clearing KV or removing KV entry"
-  },
-  {
-    name: "debug",
-    subCommand: "printKV",
-    capabilities: CAPABILITY.debugShow,
-    func: debugPrintKV,
-    help: "printing some KV content for dev/debug"
-  },
-  {
-    name: "debug",
-    subCommand: "sessionClear",
-    capabilities: CAPABILITY.debugChange,
-    func: debugSessionClear,
-    help: "clear current session data"
-  },
-  {
-    name: "debug",
-    subCommand: "sessionInit",
-    capabilities: CAPABILITY.debugChange,
-    func: debugSessionInit,
-    help: "init a new session"
-  },
-  {
-    name: "debug",
-    subCommand: "sessionCreate",
-    capabilities: CAPABILITY.debugChange,
-    func: debugSessionCreate,
-    help: "Force create a new session"
-  },
-  {
-    name: "debug",
-    subCommand: "printTips",
-    capabilities: CAPABILITY.debugShow,
-    func: debugPrintTips,
-    help: "printing user tips info for dev/debug"
-  },
-  {
-    name: "debug",
-    subCommand: "clearTips",
-    capabilities: CAPABILITY.debugChange,
-    func: debugClearTips,
-    help: "clear user tips info"
-  },
-  {
-    name: "debug",
-    subCommand: "processTips",
-    capabilities: CAPABILITY.debugChange,
-    func: debugProcessTips,
-    help: "process user tipsinfo and update stats"
-  },
-  {
-    name: "debug",
-    subCommand: "statsClear",
-    capabilities: CAPABILITY.debugChange,
-    func: debugClearStats,
-    help: "clear Stats"
-  },
-  {
-    name: "debug",
-    subCommand: "statsPrint",
-    capabilities: CAPABILITY.debugChange,
-    func: debugPrintStats,
-    help: "printing Stats"
-  },
-  {
-    name: "debug",
-    subCommand: "callbackEnable",
-    capabilities: CAPABILITY.debugChange,
-    func: debugEnableCallbacks,
-    help: "enable default callback"
-  },
-  {
-    name: "debug",
-    subCommand: "callbackCancel",
-    capabilities: CAPABILITY.debugChange,
-    func: debugCancelCallbacks,
-    help: "cancel all callback"
-  },
-  {
-    name: "test",
-    subCommand: "sessionEnter",
-    capabilities: CAPABILITY.debugChange,
-    func: sessionManageEnter,
-    help: "testing session management"
-  },
-  {
-    name: "test",
-    subCommand: "sessionLeave",
-    capabilities: CAPABILITY.debugChange,
-    func: sessionManageLeave,
-    help: "testing session management"
-  },
-  {
-    name: "test",
-    subCommand: "getID",
-    capabilities: CAPABILITY.debugChange,
-    func: testRandomID,
-    help: "testing ID generation"
-  },
-  {
-    name: "test",
-    subCommand: "statInit",
-    capabilities: CAPABILITY.debugChange,
-    func: debugGlobalStatInit,
-    help: "init new stat"
-  },
-  {
-    name: "test",
-    subCommand: "testExtend",
-    capabilities: CAPABILITY.debugChange,
-    func: testExtendClass,
-    help: "test JS extend classes"
-  },
-  { name: "help", capabilities: 0, func: cliHelpShowHelp, help: "some testing" },
-  {
-    name: "settings",
-    subCommand: "show",
-    capabilities: CAPABILITY.settingsShow,
-    func: cliSettingShowSettings,
-    help: "showing current settings"
-  },
-  {
-    name: "settings",
-    subCommand: "showlive",
-    capabilities: CAPABILITY.settingsShow,
-    func: cliSettingShowLiveSettings,
-    help: "showing overriding settings, stored in KV"
-  },
-  {
-    name: "settings",
-    subCommand: "setlive",
-    capabilities: CAPABILITY.settingsSet,
-    func: cliSettingSetLiveSetting,
-    help: "override a setting"
-  },
-  {
-    name: "settings",
-    subCommand: "clearlive",
-    capabilities: CAPABILITY.settingsSet,
-    func: cliSettingClearLiveSetting,
-    help: "clear an overrided setting"
-  },
-  {
-    name: "settings",
-    subCommand: "clearliveall",
-    capabilities: CAPABILITY.settingsSet,
-    func: cliSettingClearAllLiveSettings,
-    help: "clear all overrided settings"
-  },
-  {
-    name: "stat",
-    subCommand: "showTips",
-    capabilities: CAPABILITY.statShow,
-    func: cliStatShowTipStats,
-    help: "show Stats about tips"
-  },
-  {
-    name: "timer",
-    subCommand: "start",
-    capabilities: CAPABILITY.timerAdmin,
-    func: cliTimerStart,
-    help: "Start timer"
-  },
-  {
-    name: "timer",
-    subCommand: "stop",
-    capabilities: CAPABILITY.timerAdmin,
-    func: cliTimerStop,
-    help: "Stop timer"
-  },
-  {
-    name: "timer",
-    subCommand: "stopall",
-    capabilities: CAPABILITY.timerAdmin,
-    func: cliTimerStopAll,
-    help: "Stop All timers"
-  },
-  {
-    name: "timer",
-    subCommand: "freeze",
-    capabilities: CAPABILITY.timerAdmin,
-    func: cliTimerFreeze,
-    help: "Freeze timer"
-  },
-  {
-    name: "timer",
-    subCommand: "list",
-    capabilities: CAPABILITY.timerShow,
-    func: cliTimerListTimers,
-    help: "List timers"
-  },
-  {
-    name: "timer",
-    subCommand: "add",
-    capabilities: CAPABILITY.timerAdmin,
-    func: cliTimerAddTimer,
-    help: "Add a timer"
-  },
-  {
-    name: "timer",
-    subCommand: "delete",
-    capabilities: CAPABILITY.timerAdmin,
-    func: cliTimerdeleteTimer,
-    help: "delete a timer"
+// src/js/tool/tool.mts
+function getRandomInt(min, max) {
+  const tMin = Math.ceil(min);
+  const tMax = Math.floor(max);
+  return Math.floor(Math.random() * (tMax - tMin) + tMin);
+}
+function getRandomID(strengh = 2) {
+  const il = [];
+  for (let index = 0; index < strengh; index++) {
+    il.push(getRandomInt(0, 1048576));
   }
-];
-var AVAILABLE_USER_COMMANDS = [
-  { name: "debug", subCommand: "test", capabilities: 0, func: testDebugCommand, help: "some testing" },
-  { name: "help", capabilities: 0, func: cliHelpShowHelp, help: "some testing" }
-];
-var CALLBACKS_INFO = {
-  tipUpdateStatData: {
-    enabled: true,
-    func: tipUpdateStatData,
-    defaultDelay: 5,
-    defaultRepeating: true
-  }
-};
-function cliSettingShowSettings(ctx) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  printCommandResult(ctx, JSON.stringify(SETTINGS, null, "	"), NOTICE_COLOR_THEME.staff);
-}
-function cliHelpShowHelp(ctx) {
-  const { user = null, room = null, kv = null } = ctx;
-  const userCap = getUserCapabilities(user);
-  function loopOnAvailableCommands(availableCommands, baseCmd) {
-    let message2 = "";
-    availableCommands.forEach((c) => {
-      if ((c.capabilities & userCap) === c.capabilities) {
-        if (c.subCommand === void 0) {
-          message2 = `${message2} ${baseCmd} ${c.name} 	 -> ${c.help} 
-`;
-        } else {
-          message2 = `${message2} ${baseCmd} ${c.name} ${c.subCommand} 	 -> ${c.help} 
-`;
-        }
-      }
-    });
-    return message2;
-  }
-  let message = "Here the commands availlable to you:\n";
-  message = message + loopOnAvailableCommands(AVAILABLE_STAFF_COMMANDS, SETTINGS.cliBaseStaffCommand);
-  message = message + loopOnAvailableCommands(AVAILABLE_USER_COMMANDS, SETTINGS.cliBaseUserCommand);
-  printCommandResult(ctx, message, NOTICE_COLOR_THEME.help);
-}
-function cliSettingSetLiveSetting(ctx, args) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  if (args.length > 1) {
-    const key = args[0];
-    const v = args[1];
-    if (Object.hasOwn(SETTINGS_INFO, key)) {
-      const sInfo = SETTINGS_INFO[key];
-      const {
-        defaultValue = null,
-        desc = null,
-        fromSettings = null,
-        forceUpdate = null,
-        liveUpdate = null,
-        convert = null
-      } = sInfo;
-      if (liveUpdate) {
-        let settings = {};
-        settings = kv.get(KV_KEYS.liveSettings, {});
-        if (convert && v) {
-          let c = null;
-          let l = null;
-          let nv = null;
-          switch (convert) {
-            case SETTINGS_CONVERT.number:
-              c = parseInt(v);
-              if (typeof c === "number" && c) {
-                settings[key] = c;
-              } else {
-                settings[key] = defaultValue;
-              }
-              break;
-            case SETTINGS_CONVERT.listString:
-              l = v.split(CB_SETTINGS_LIST_SEPARATOR);
-              nv = [];
-              l.forEach((u) => {
-                nv.push(u.trim());
-              });
-              settings[key] = nv;
-              break;
-            case SETTINGS_CONVERT.boolean:
-              c = parseInt(v);
-              if (v === "true") {
-                settings[key] = true;
-              } else if (v === "false") {
-                settings[key] = false;
-              } else {
-                settings[key] = defaultValue;
-              }
-              break;
-            default:
-              settings[key] = v;
-              break;
-          }
-        } else {
-          settings[key] = v;
-        }
-        kv.set(KV_KEYS.liveSettings, settings);
-      }
-    }
-  }
-}
-function cliSettingClearLiveSetting(ctx, args) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  if (args.length === 1) {
-    const key = args[0];
-    if (Object.hasOwn(SETTINGS_INFO, key)) {
-      const sInfo = SETTINGS_INFO[key];
-      const {
-        defaultValue = null,
-        desc = null,
-        fromSettings = null,
-        forceUpdate = null,
-        liveUpdate = null,
-        convert = null
-      } = sInfo;
-      if (liveUpdate) {
-        let settings = {};
-        settings = kv.get(KV_KEYS.liveSettings, {});
-        delete settings[key];
-        kv.set(KV_KEYS.liveSettings, settings);
-      }
-    }
-  }
-}
-function cliSettingClearAllLiveSettings(ctx, args) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  const settings = {};
-  kv.set(KV_KEYS.liveSettings, settings);
-}
-function cliSettingShowLiveSettings(ctx) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  const settings = kv.get(KV_KEYS.liveSettings, {});
-  printCommandResult(ctx, JSON.stringify(settings, null, "	"), NOTICE_COLOR_THEME.staff);
-}
-function cliStatShowTipStats(ctx) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  const statCompute = new GlobalStatsCompute(ctx);
-  const p5min = 5 * 60 * 1e3;
-  const bt5min = statCompute.getMaxTipper(p5min);
-  const tot5min0tk = statCompute.getTotalTips(p5min, 0);
-  const tot5min5tk = statCompute.getTotalTips(p5min, 5);
-  const totSession = statCompute.getSessionTotalTips(ctx);
-  const msg = `Some Stats:
-    - Best Tipper in last 5 minutes: ${bt5min.userName} (${bt5min.tokens} tokens)
-    - Total Tips  in last 5 minutes:     ${tot5min0tk.tokens} (${tot5min0tk.userCount} users)
-    - Total Big Tips  in last 5 minutes: ${tot5min5tk.tokens} (${tot5min5tk.userCount} users)
-    - Total Tips in current Session: ${totSession.tokens} (${totSession.userCount} users)`;
-  printCommandResult(ctx, msg, NOTICE_COLOR_THEME.staff);
-}
-function cliTimerStart(ctx, args, cliInfo) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  if (args.length === 1) {
-    const moduleTimer = ModuleTimer.getFromKV(ctx);
-    const name = args[0];
-    const result = moduleTimer.startTimer(ctx, name);
-    if (result.status === ModuleTimer.TIMER_STATUS.running) {
-      moduleTimer.storeToKV(ctx);
-      console.log(moduleTimer);
-      printCommandResult(ctx, "Timer started: " + name, NOTICE_COLOR_THEME.staff);
-    } else if (result.status === ModuleTimer.TIMER_STATUS.unknown) {
-      printCommandResult(ctx, "Timer unknown: " + name, NOTICE_COLOR_THEME.error);
-    } else {
-      printCommandResult(ctx, "Timer, unknown error: " + name, NOTICE_COLOR_THEME.error);
-    }
-  } else {
-    const msg = `Please choose a timer
-        ${COMMAND_START_CHAR}${SETTINGS.cliBaseStaffCommand} ${cliInfo.commandName} ${cliInfo.subCommand} <timerName>`;
-    printCommandResult(ctx, msg, NOTICE_COLOR_THEME.error);
-  }
-}
-function cliTimerFreeze(ctx, args, cliInfo) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  if (args.length === 1) {
-    const moduleTImer = ModuleTimer.getFromKV(ctx);
-    const name = args[0];
-    const result = moduleTImer.freezeTimer(ctx, name);
-    if (result.status === ModuleTimer.TIMER_STATUS.frozen) {
-      moduleTImer.storeToKV(ctx);
-      printCommandResult(ctx, "Timer frozen: " + name, NOTICE_COLOR_THEME.staff);
-    } else if (result.status === ModuleTimer.TIMER_STATUS.unknown) {
-      printCommandResult(ctx, "Timer unknown: " + name, NOTICE_COLOR_THEME.error);
-    } else {
-      printCommandResult(ctx, "Timer, unknown error: " + name, NOTICE_COLOR_THEME.error);
-    }
-  } else {
-    const msg = `Please choose a timer
-        ${COMMAND_START_CHAR}${cliInfo.commandName} ${cliInfo.subCommand} <timerName>`;
-    printCommandResult(ctx, msg, NOTICE_COLOR_THEME.error);
-  }
-}
-function cliTimerStop(ctx, args, cliInfo) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  if (args.length === 1) {
-    const moduleTimer = ModuleTimer.getFromKV(ctx);
-    const name = args[0];
-    const result = moduleTimer.stopTimer(ctx, name);
-    if (result.status === ModuleTimer.TIMER_STATUS.justStoped) {
-      moduleTimer.storeToKV(ctx);
-      printCommandResult(ctx, "Timer stoped: " + name, NOTICE_COLOR_THEME.staff);
-    } else if (result.status === ModuleTimer.TIMER_STATUS.unknown) {
-      printCommandResult(ctx, "Timer unknown: " + name, NOTICE_COLOR_THEME.error);
-    } else {
-      printCommandResult(ctx, "Timer, unknown error: " + name, NOTICE_COLOR_THEME.error);
-    }
-  } else {
-    const msg = `Please choose a timer
-        ${COMMAND_START_CHAR}${cliInfo.commandName} ${cliInfo.subCommand} <timerName>`;
-    printCommandResult(ctx, msg, NOTICE_COLOR_THEME.error);
-  }
-}
-function cliTimerStopAll(ctx, args, cliInfo) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  const moduleTImer = ModuleTimer.getFromKV(ctx);
-  moduleTImer.stopAllTimer(ctx);
-  moduleTImer.storeToKV(ctx);
-  cliTimerListTimers(ctx);
-}
-function cliTimerAddTimer(ctx, args, cliInfo) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  if (args.length >= 2) {
-    const moduleTimer = ModuleTimer.getFromKV(ctx);
-    const timerLength = parseInt(args[0]);
-    const timerMessage = args.slice(1).join(" ");
-    const existingNames = Object.keys(moduleTimer.getAvaillableTimers());
-    let timerName = null;
-    AVAILLABLE_LIVE_SETTINGS_NAMES.some((pName) => {
-      if (!existingNames.includes(pName)) {
-        timerName = pName;
-        return true;
-      }
-    });
-    if (timerName && timerLength) {
-      const result = moduleTimer.addLiveTimer(ctx, timerName, timerLength, timerMessage, false);
-      moduleTimer.storeToKV(ctx);
-      const msg = `OK: timer ${result.timerInfo.name} created`;
-      printCommandResult(ctx, msg, NOTICE_COLOR_THEME.staff);
-    } else {
-      let msg = "";
-      if (!timerLength) {
-        msg = msg + "ERROR: length not correct: " + args[0] + " \n";
-      }
-      if (!timerName) {
-        msg = msg + "ERROR: No free timer name\n";
-      }
-      msg = msg + `${COMMAND_START_CHAR}${cliInfo.commandName} ${cliInfo.subCommand} <length in sec> <message>`;
-      printCommandResult(ctx, msg, NOTICE_COLOR_THEME.error);
-    }
-  } else {
-    const msg = `Please enter timer infos
-        ${COMMAND_START_CHAR}${cliInfo.commandName} ${cliInfo.subCommand} <length in sec> <message>`;
-    printCommandResult(ctx, msg, NOTICE_COLOR_THEME.error);
-  }
-}
-function cliTimerdeleteTimer(ctx, args, cliInfo) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  if (args.length === 1) {
-    const moduleTimer = ModuleTimer.getFromKV(ctx);
-    const name = args[0];
-    const existingNames = Object.keys(moduleTimer.liveTimers);
-    if (existingNames.includes(name)) {
-      const result = moduleTimer.deleteLiveTimer(ctx, name);
-      if (result.status === ModuleTimer.TIMER_STATUS.deleted) {
-        moduleTimer.storeToKV(ctx);
-        printCommandResult(ctx, "Timer deleted: " + name, NOTICE_COLOR_THEME.staff);
-      }
-    } else {
-      printCommandResult(ctx, "Timer not found or Static Timer: " + name, NOTICE_COLOR_THEME.error);
-    }
-  } else {
-    const msg = `Please choose a timer
-        ${COMMAND_START_CHAR}${cliInfo.commandName} ${cliInfo.subCommand} <timerName>`;
-    printCommandResult(ctx, msg, NOTICE_COLOR_THEME.error);
-  }
-}
-function cliTimerListTimers(ctx) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  const moduleTimer = ModuleTimer.getFromKV(ctx);
-  const timers = moduleTimer.getStatus(ctx);
-  let msg = `Timers list:`;
-  let m = "";
-  console.log(timers);
-  Object.entries(timers).forEach(([tName, tInfo]) => {
-    if (typeof tInfo.state === "undefined") {
-      m = `${tName}: ${tInfo.length}sec '${tInfo.message}'`;
-    } else if (tInfo.state === ModuleTimer.TIMER_STATUS.running) {
-      m = `${tName}: ${tInfo.length}sec ${tInfo.state} ${tInfo.timerLength - Math.round((Date.now() - tInfo.lastStartTime) / 1e3)}sec rem '${tInfo.message}'`;
-    } else if (tInfo.state === ModuleTimer.TIMER_STATUS.frozen) {
-      m = `${tName}: ${tInfo.length}sec ${tInfo.state} ${tInfo.remainingLength}sec remaining '${tInfo.message}'`;
-    }
-    msg = `${msg}
-        ${m}`;
+  let id = "";
+  il.forEach((element) => {
+    id = id + element.toString(16);
   });
-  printCommandResult(ctx, msg, NOTICE_COLOR_THEME.staff);
+  return id;
 }
-function printToOwner(ctx, message, theme = NOTICE_COLOR_THEME.staff) {
-  const { user = null, room = null, kv = null } = ctx;
-  const p = {
-    ...theme,
-    toUsername: room.owner
-  };
-  room.sendNotice(message, p);
-}
-function printToUser(ctx, message, username, theme = NOTICE_COLOR_THEME.userError) {
-  const { user = null, room = null, kv = null } = ctx;
-  const p = {
-    ...theme,
-    toUsername: username
-  };
-  room.sendNotice(message, p);
-}
-function printToEveryone(ctx, message, theme = NOTICE_COLOR_THEME.user) {
-  const { user = null, room = null, kv = null } = ctx;
-  const p = {
-    ...theme
-  };
-  room.sendNotice(message, p);
-}
-function getUserCapabilities(userObj) {
-  const username = userObj.username;
-  let capabilities = 0;
-  if (SETTINGS.debugEnableRemoteUser && SETTINGS.debugAllowedUsernames && Array.isArray(SETTINGS.debugAllowedUsernames) && username && SETTINGS.debugAllowedUsernames.includes(username)) {
-    capabilities = capabilities | DEFAULT_USER_RIGHTS.debug;
+function getObjectProperty(obj, prop, defaultValue = null, updateObject = true) {
+  if (Object.hasOwn(obj, prop)) {
+    return obj[prop];
+  } else {
+    if (updateObject) {
+      obj[prop] = defaultValue;
+    }
+    return defaultValue;
   }
-  if (userObj.colorGroup === CB_USER_GROUPS.owner.userColor || userObj.isOwner) {
-    capabilities = capabilities | DEFAULT_USER_RIGHTS.owner;
-    if (SETTINGS.debugAllowOwner) {
-      capabilities = capabilities | DEFAULT_USER_RIGHTS.debug;
+}
+
+// src/js/app-module/UserTipInfo.mts
+var UserTipInfo = class _UserTipInfo {
+  tipList;
+  tipTotal;
+  userName;
+  sessionID;
+  key;
+  constructor(ctx, userName) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    this.tipList = [];
+    this.tipTotal = 0;
+    this.userName = userName;
+    const sObj = Session.getCurrentSession(ctx);
+    this.sessionID = sObj.sessionID;
+    this.key = _UserTipInfo.getUserTipKey(ctx, userName);
+  }
+  static getFromKV(ctx, userName) {
+    const userTipInfo = new _UserTipInfo(ctx, userName);
+    userTipInfo.loadFromKV(ctx);
+    return userTipInfo;
+  }
+  static getUserTipKey(ctx, userName) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    let key = null;
+    const keysMap = kv.get(KV_KEYS.userTipsKeysMap, {});
+    if (Object.hasOwn(keysMap, userName)) {
+      key = keysMap[userName];
+    } else {
+      key = userName + "-" + getRandomID(4);
+      keysMap[userName] = key;
+      kv.set(KV_KEYS.userTipsKeysMap, keysMap);
+    }
+    return key;
+  }
+  static updateUserTips(ctx) {
+    const { message = null, user, room = null, kv = null, tip = null } = ctx;
+    const userName = user.username;
+    const userTipInfo = _UserTipInfo.getFromKV(ctx, userName);
+    userTipInfo.addTip(ctx);
+    userTipInfo.storeToKV(ctx);
+  }
+  static clearAll(ctx) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    const keysMap = kv.get(KV_KEYS.userTipsKeysMap, {});
+    const keyList = Object.values(keysMap);
+    keyList.forEach((key) => {
+      kv.remove(key);
+    });
+    kv.remove(KV_KEYS.userTipsKeysMap);
+  }
+  loadFromKV(ctx) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    const userTipInfo = kv.get(this.key, null);
+    if (userTipInfo) {
+      this.tipList = userTipInfo.tipList;
+      this.tipTotal = userTipInfo.tipTotal;
     }
   }
-  if (SETTINGS.userStaffMembersAdmin && Array.isArray(SETTINGS.userStaffMembersAdmin) && username && SETTINGS.userStaffMembersAdmin.includes(username)) {
-    capabilities = capabilities | DEFAULT_USER_RIGHTS.admin;
+  storeToKV(ctx) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    kv.set(this.key, this);
   }
-  if (SETTINGS.userStaffMembersMonitor && Array.isArray(SETTINGS.userStaffMembersMonitor) && username && SETTINGS.userStaffMembersMonitor.includes(username)) {
-    capabilities = capabilities | DEFAULT_USER_RIGHTS.monitor;
+  addTip(ctx) {
+    const { message = null, user, room = null, kv = null, tip } = ctx;
+    const extendedTip = {
+      tokens: tip.tokens,
+      message: tip.message,
+      isAnon: tip.isAnon,
+      date: Date.now(),
+      userName: user.username,
+      sessionID: this.sessionID
+    };
+    this.tipList.push(extendedTip);
+    this.tipTotal = this.tipTotal + tip.tokens;
   }
-  return capabilities;
+  toString() {
+    let m = "";
+    m = m + JSON.stringify(this.tipList);
+    m = m + "\n" + JSON.stringify(this.tipTotal);
+    return m;
+  }
+};
+
+// src/js/app-module/GlobalStatsTimeSeries.mts
+var GlobalStatsTimeSeries = class _GlobalStatsTimeSeries {
+  sessionID;
+  timeSeries;
+  tsMetadata;
+  constructor(ctx) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    const sObj = Session.getCurrentSession(ctx);
+    this.sessionID = sObj.sessionID;
+    this.timeSeries = {};
+    this.tsMetadata = {};
+  }
+  static TS_TYPES;
+  static TS_METADATA;
+  static DEFAULT_TS_METADATA = {
+    userTips: {
+      size: 300,
+      span: 6e4
+    },
+    message: {
+      size: 300,
+      span: 6e4
+    }
+  };
+  static FALLBACK_TS_SIZE = 300;
+  // number of buckets in TS
+  static FALLBACK_TS_SPAN = 6e4;
+  // duration of "bucket" in TS
+  static getFromKV(ctx) {
+    const globalTipStat = new _GlobalStatsTimeSeries(ctx);
+    globalTipStat.loadFromKV(ctx);
+    return globalTipStat;
+  }
+  static initNewStatObj(ctx) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    kv.remove(KV_KEYS.currentGlobalStatsTS);
+    const globalStatsTS = new _GlobalStatsTimeSeries(ctx);
+    globalStatsTS.storeToKV(ctx);
+    return globalStatsTS;
+  }
+  loadFromKV(ctx) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    const globalTipStat = kv.get(KV_KEYS.currentGlobalStatsTS, null);
+    if (globalTipStat) {
+      this.timeSeries = globalTipStat.timeSeries;
+      this.tsMetadata = globalTipStat.tsMetadata;
+    }
+  }
+  storeToKV(ctx) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    kv.set(KV_KEYS.currentGlobalStatsTS, this);
+  }
+  getTimeSerieNames(tsType) {
+    const allTS = getObjectProperty(this.timeSeries, tsType, {});
+    return Object.keys(allTS);
+  }
+  getTimeSerie(tsType, tsName) {
+    const allTS = getObjectProperty(this.timeSeries, tsType, {});
+    if (Object.hasOwn(allTS, tsName)) {
+      return allTS[tsName];
+    } else {
+      return this.initTimeSerie(tsType, tsName);
+    }
+  }
+  initTimeSerie(tsType, tsName) {
+    const allTS = getObjectProperty(this.timeSeries, tsType, {});
+    const nbucket = this.getTimeSerieSize(tsType, tsName);
+    const list = new Array(nbucket);
+    list.fill(0);
+    allTS[tsName] = list;
+    let newRefDate = 0;
+    let trd = 0;
+    const allTSmetadata = getObjectProperty(this.tsMetadata, tsType, {});
+    Object.keys(allTSmetadata).forEach((tsName2) => {
+      trd = this.getTimeSerieMetadata(
+        tsType,
+        tsName2,
+        "refDate" /* refDate */,
+        0
+      );
+      if (trd > newRefDate) {
+        newRefDate = trd;
+      }
+    });
+    if (newRefDate === 0) {
+      const span = this.getTimeSerieSpan(tsType, tsName);
+      newRefDate = Date.now() + span;
+    }
+    this.setTimeSerieMetadata(
+      tsType,
+      tsName,
+      "refDate" /* refDate */,
+      newRefDate
+    );
+    return list;
+  }
+  getTimeSerieSize(tsType, tsName) {
+    return this.getTimeSerieMetadata(
+      tsType,
+      tsName,
+      "size" /* size */,
+      _GlobalStatsTimeSeries.FALLBACK_TS_SIZE
+    );
+  }
+  getTimeSerieSpan(tsType, tsName) {
+    return this.getTimeSerieMetadata(
+      tsType,
+      tsName,
+      "span" /* span */,
+      _GlobalStatsTimeSeries.FALLBACK_TS_SPAN
+    );
+  }
+  getTimeSerieMetadata(tsType, tsName, metadataType, fallbackValue) {
+    const allTSmetadata = getObjectProperty(this.tsMetadata, tsType, {});
+    const metadataObj = getObjectProperty(allTSmetadata, tsName, {});
+    const typeDefaultValues = getObjectProperty(
+      _GlobalStatsTimeSeries.DEFAULT_TS_METADATA,
+      tsType,
+      {},
+      false
+    );
+    const defaultValue = getObjectProperty(typeDefaultValues, metadataType, fallbackValue, false);
+    const metadata = getObjectProperty(
+      metadataObj,
+      metadataType,
+      defaultValue
+    );
+    return metadata;
+  }
+  setTimeSerieMetadata(tsType, tsName, metadataType, newValue) {
+    const allTSmetadata = getObjectProperty(this.tsMetadata, tsType, {});
+    const metadataObj = getObjectProperty(allTSmetadata, tsName, {});
+    metadataObj[metadataType] = newValue;
+  }
+  slideAllTimeSeries(currentDate, tsType) {
+    const allTS = getObjectProperty(this.timeSeries, tsType, {});
+    Object.keys(allTS).forEach((tsName) => {
+      this.slideTimeSeries(currentDate, tsType, tsName);
+    });
+  }
+  slideTimeSeries(currentDate, tsType, tsName) {
+    const refDate = this.getTimeSerieMetadata(
+      tsType,
+      tsName,
+      "refDate" /* refDate */,
+      0
+    );
+    const span = this.getTimeSerieSpan(tsType, tsName);
+    if (refDate === 0) {
+      this.setTimeSerieMetadata(
+        tsType,
+        tsName,
+        "refDate" /* refDate */,
+        currentDate + span
+      );
+    } else if (currentDate - refDate >= 0) {
+      const nbucket = Math.ceil((currentDate - refDate) / span);
+      const allTS = getObjectProperty(this.timeSeries, tsType, {});
+      Object.values(allTS).forEach((list) => {
+        for (let i = 0; i < nbucket; i++) {
+          list.unshift(0);
+          list.pop();
+        }
+      });
+      this.setTimeSerieMetadata(
+        tsType,
+        tsName,
+        "refDate" /* refDate */,
+        refDate + nbucket * span
+      );
+    }
+  }
+  processTip(userName, tip) {
+    const tsType = "userTips" /* userTips */;
+    const span = this.getTimeSerieSpan(tsType, userName);
+    const list = this.getTimeSerie(tsType, userName);
+    const refDate = this.getTimeSerieMetadata(
+      tsType,
+      userName,
+      "refDate" /* refDate */,
+      0
+    );
+    const maxDate = this.getTimeSerieMetadata(
+      tsType,
+      userName,
+      "maxDate" /* maxDate */,
+      0
+    );
+    if (tip.date > maxDate) {
+      const idx = Math.floor((refDate - tip.date) / span);
+      list[idx] = list[idx] + tip.tokens;
+      this.setTimeSerieMetadata(
+        tsType,
+        userName,
+        "maxDate" /* maxDate */,
+        tip.date
+      );
+    }
+  }
+};
+
+// src/js/tip-management.mts
+function tipUpdateStatData(ctx) {
+  const { message = null, user = null, room = null, kv, tip = null } = ctx;
+  const globalTipStat = GlobalStatsTimeSeries.getFromKV(ctx);
+  const currentDate = Date.now();
+  globalTipStat.slideAllTimeSeries(currentDate, "userTips" /* userTips */);
+  const keysMap = kv.get(KV_KEYS.userTipsKeysMap, {});
+  const keyList = Object.keys(keysMap);
+  keyList.forEach((userName) => {
+    const userTipInfo = UserTipInfo.getFromKV(ctx, userName);
+    let extendedTip = {};
+    while (typeof (extendedTip = userTipInfo.tipList.shift()) !== "undefined") {
+      globalTipStat.processTip(userName, extendedTip);
+    }
+    userTipInfo.storeToKV(ctx);
+  });
+  globalTipStat.storeToKV(ctx);
 }
+
+// src/js/app-module/UserChatInfo.mts
+var UserChatInfo = class _UserChatInfo {
+  userName;
+  sessionID;
+  key;
+  pendingNotices;
+  constructor(ctx, userName) {
+    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
+    this.userName = userName;
+    const sObj = Session.getCurrentSession(ctx);
+    this.sessionID = sObj.sessionID;
+    this.key = _UserChatInfo.getUserChatKey(ctx, userName);
+    this.pendingNotices = [];
+  }
+  static getFromKV(ctx, userName) {
+    const userChatInfo = new _UserChatInfo(ctx, userName);
+    userChatInfo.loadFromKV(ctx);
+    return userChatInfo;
+  }
+  static getUserChatKey(ctx, userName) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    let key = null;
+    const keysMap = kv.get(KV_KEYS.userChatKeysMap, {});
+    if (Object.hasOwn(keysMap, userName)) {
+      key = keysMap[userName];
+    } else {
+      key = userName + "-" + getRandomID(4);
+      keysMap[userName] = key;
+      kv.set(KV_KEYS.userChatKeysMap, keysMap);
+    }
+    return key;
+  }
+  // TODO improve pending notice from string to object
+  static addPendingNotice(ctx, userName, futureNotice) {
+    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
+    const userChatInfo = _UserChatInfo.getFromKV(ctx, userName);
+    userChatInfo.addNotice(ctx, futureNotice);
+    userChatInfo.storeToKV(ctx);
+  }
+  static sendPendingNotices(ctx, userName) {
+    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
+    const userChatInfo = _UserChatInfo.getFromKV(ctx, userName);
+    let notice = "";
+    while (typeof (notice = userChatInfo.pendingNotices.shift()) !== "undefined") {
+      printToUser(ctx, notice, userName, NOTICE_COLOR_THEME.userError);
+    }
+    userChatInfo.storeToKV(ctx);
+  }
+  static clearAll(ctx) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    const keysMap = kv.get(KV_KEYS.userChatKeysMap, {});
+    const keyList = Object.values(keysMap);
+    keyList.forEach((key) => {
+      kv.remove(key);
+    });
+    kv.remove(KV_KEYS.userChatKeysMap);
+  }
+  loadFromKV(ctx) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    const userChatInfo = kv.get(this.key, null);
+    if (userChatInfo) {
+      this.pendingNotices = userChatInfo.pendingNotices;
+    }
+  }
+  storeToKV(ctx) {
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    kv.set(this.key, this);
+  }
+  addNotice(ctx, futureNotice) {
+    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
+    this.pendingNotices.push(futureNotice);
+  }
+};
+
+// src/js/tool/log.mts
+function logIt(message) {
+  const stack = new Error().stack;
+  const caller = stack.split("\n")[2].trim().split(/\s+/)[1];
+  console.log(message + "\nCaller ----> " + caller);
+}
+
+// src/js/session-management.mts
 function sessionManageEnter(ctx, force = false) {
-  const { user = null, room = null, kv = null } = ctx;
+  const { user = null, room = null, kv } = ctx;
   const currentDate = Date.now();
   const lastStart = kv.get(KV_KEYS.sessionStartDate, 0);
   const lastEnter = kv.get(KV_KEYS.sessionLastEnterDate, 0);
@@ -962,17 +789,28 @@ function sessionManageEnter(ctx, force = false) {
   kv.set(KV_KEYS.sessionLastEnterDate, currentDate);
 }
 function sessionManageLeave(ctx) {
-  const { user = null, room = null, kv = null } = ctx;
+  const { user = null, room = null, kv } = ctx;
   const currentDate = Date.now();
   kv.set(KV_KEYS.sessionLastLeaveDate, currentDate);
 }
 var Session = class _Session {
+  sessionID;
+  startDate;
   constructor(currentDate) {
     this.sessionID = getRandomID(8);
     this.startDate = currentDate;
   }
+  static getCurrentSession(ctx) {
+    const { user = null, room = null, kv } = ctx;
+    let sObj = kv.get(KV_KEYS.currentSession);
+    if (!sObj) {
+      sessionManageEnter(ctx);
+      sObj = kv.get(KV_KEYS.currentSession);
+    }
+    return sObj;
+  }
   static initNewSession(ctx, currentDate = null, first = false) {
-    const { user = null, room = null, kv = null } = ctx;
+    const { user = null, room = null, kv } = ctx;
     let startDate = currentDate;
     if (!startDate) {
       startDate = Date.now();
@@ -989,9 +827,9 @@ var Session = class _Session {
     const newSession = new _Session(startDate);
     kv.set(KV_KEYS.currentSession, newSession);
     if (previousSession) {
-      let tl = kv.get(KV_KEYS.sessionHistory, []);
+      const tl = kv.get(KV_KEYS.sessionHistory, []);
       const count = tl.unshift(newSession);
-      if (count > SETTINGS.sessionHistoryMaxLenght) {
+      if (count > SETTINGS.sessionHistoryMaxLength) {
         tl.pop();
       }
       kv.set(KV_KEYS.sessionHistory, tl);
@@ -999,452 +837,39 @@ var Session = class _Session {
     printToOwner(ctx, "New Session created :-)");
   }
   static clear(ctx) {
-    const { user = null, room = null, kv = null } = ctx;
+    const { user = null, room = null, kv } = ctx;
     kv.remove(KV_KEYS.sessionStartDate);
     kv.remove(KV_KEYS.sessionLastEnterDate);
     kv.remove(KV_KEYS.sessionLastLeaveDate);
     kv.remove(KV_KEYS.currentSession);
   }
 };
-var UserTipInfo = class _UserTipInfo {
-  constructor(ctx, userName) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    this.tipList = [];
-    this.tipTotal = 0;
-    this.userName = userName;
-    const sObj = kv.get(KV_KEYS.currentSession);
-    this.sessionID = sObj.sessionID;
-    this.key = _UserTipInfo.getUserTipKey(ctx, userName);
-  }
-  static getFromKV(ctx, userName) {
-    let userTipInfo = new _UserTipInfo(ctx, userName);
-    userTipInfo.loadFromKV(ctx);
-    return userTipInfo;
-  }
-  static getUserTipKey(ctx, userName) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    let key = null;
-    let keysMap = kv.get(KV_KEYS.userTipsKeysMap, {});
-    if (Object.hasOwn(keysMap, userName)) {
-      key = keysMap[userName];
-    } else {
-      key = userName + "-" + getRandomID(4);
-      keysMap[userName] = key;
-      kv.set(KV_KEYS.userTipsKeysMap, keysMap);
-    }
-    return key;
-  }
-  static updateUserTips(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    const userName = user.username;
-    let userTipInfo = _UserTipInfo.getFromKV(ctx, userName);
-    userTipInfo.addTip(ctx);
-    userTipInfo.storeToKV(ctx);
-  }
-  static clearAll(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    const keysMap = kv.get(KV_KEYS.userTipsKeysMap, {});
-    const keyList = Object.values(keysMap);
-    keyList.forEach((key) => {
-      kv.remove(key);
-    });
-    kv.remove(KV_KEYS.userTipsKeysMap);
-  }
-  loadFromKV(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    let userTipInfo = kv.get(this.key, null);
-    if (userTipInfo) {
-      this.tipList = userTipInfo.tipList;
-      this.tipTotal = userTipInfo.tipTotal;
-    }
-  }
-  storeToKV(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    kv.set(this.key, this);
-  }
-  addTip(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    const extendedTip = {
-      tokens: tip.tokens,
-      message: tip.message,
-      isAnon: tip.isAnon,
-      date: Date.now(),
-      userName: user.username,
-      sessionID: this.sessionID
-    };
-    this.tipList.push(extendedTip);
-    this.tipTotal = this.tipTotal + tip.tokens;
-  }
-  toString() {
-    let m = "";
-    m = m + JSON.stringify(this.tipList);
-    m = m + "\n" + JSON.stringify(this.tipTotal);
-    return m;
-  }
-};
-var UserChatInfo = class _UserChatInfo {
-  constructor(ctx, userName) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    this.userName = userName;
-    const sObj = kv.get(KV_KEYS.currentSession);
-    this.sessionID = sObj.sessionID;
-    this.key = _UserChatInfo.getUserChatKey(ctx, userName);
-    this.pendingNotices = [];
-  }
-  static getFromKV(ctx, userName) {
-    let userChatInfo = new _UserChatInfo(ctx, userName);
-    userChatInfo.loadFromKV(ctx);
-    return userChatInfo;
-  }
-  static getUserChatKey(ctx, userName) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    let key = null;
-    let keysMap = kv.get(KV_KEYS.userChatKeysMap, {});
-    if (Object.hasOwn(keysMap, userName)) {
-      key = keysMap[userName];
-    } else {
-      key = userName + "-" + getRandomID(4);
-      keysMap[userName] = key;
-      kv.set(KV_KEYS.userChatKeysMap, keysMap);
-    }
-    return key;
-  }
-  static addPendingNotice(ctx, userName, futureNotice) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    let userChatInfo = _UserChatInfo.getFromKV(ctx, userName);
-    userChatInfo.addNotice(ctx, futureNotice);
-    userChatInfo.storeToKV(ctx);
-  }
-  static sendPendingNotices(ctx, userName) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    let userChatInfo = _UserChatInfo.getFromKV(ctx, userName);
-    let notice = "";
-    while (typeof (notice = userChatInfo.pendingNotices.shift()) !== "undefined") {
-      printToUser(ctx, notice, userName, NOTICE_COLOR_THEME.userError);
-    }
-    userChatInfo.storeToKV(ctx);
-  }
-  static clearAll(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    const keysMap = kv.get(KV_KEYS.userChatKeysMap, {});
-    const keyList = Object.values(keysMap);
-    keyList.forEach((key) => {
-      kv.remove(key);
-    });
-    kv.remove(KV_KEYS.userChatKeysMap);
-  }
-  loadFromKV(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    let userChatInfo = kv.get(this.key, null);
-    if (userChatInfo) {
-      this.pendingNotices = userChatInfo.pendingNotices;
-    }
-  }
-  storeToKV(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    kv.set(this.key, this);
-  }
-  addNotice(ctx, futureNotice) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    this.pendingNotices.push(futureNotice);
-  }
-};
-var GlobalStatsTimeSeries = class _GlobalStatsTimeSeries {
-  constructor(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    const sObj = kv.get(KV_KEYS.currentSession);
-    this.sessionID = sObj.sessionID;
-    this.timeSeries = {};
-    this.tsMetadata = {};
-  }
-  static TS_TYPES = {
-    userTips: "userTips",
-    message: "message"
-  };
-  static TS_METADATA = {
-    refDate: "refDAte",
-    maxDate: "maxDAte",
-    size: "size",
-    span: "span"
-  };
-  static DEFAULT_TS_METADATA = {
-    userTips: {
-      size: 300,
-      span: 6e4
-    },
-    message: {
-      size: 300,
-      span: 6e4
-    }
-  };
-  static FALLBACK_TS_SIZE = 300;
-  // number of buckets in TS
-  static FALLBACK_TS_SPAN = 6e4;
-  // duration of "bucket" in TS
-  static getFromKV(ctx) {
-    let globalTipStat = new _GlobalStatsTimeSeries(ctx);
-    globalTipStat.loadFromKV(ctx);
-    return globalTipStat;
-  }
-  static initNewStatObj(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    kv.remove(KV_KEYS.currentGlobalStatsTS);
-    const globalStatsTS = new _GlobalStatsTimeSeries(ctx);
-    globalStatsTS.storeToKV(ctx);
-    return globalStatsTS;
-  }
-  loadFromKV(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    let globalTipStat = kv.get(KV_KEYS.currentGlobalStatsTS, null);
-    if (globalTipStat) {
-      this.timeSeries = globalTipStat.timeSeries;
-      this.tsMetadata = globalTipStat.tsMetadata;
-    }
-  }
-  storeToKV(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    kv.set(KV_KEYS.currentGlobalStatsTS, this);
-  }
-  getTimeSerieNames(tsType) {
-    const allTS = getObjectProperty(this.timeSeries, tsType, {});
-    return Object.keys(allTS);
-  }
-  getTimeSerie(tsType, tsName) {
-    let allTS = getObjectProperty(this.timeSeries, tsType, {});
-    if (Object.hasOwn(allTS, tsName)) {
-      return allTS[tsName];
-    } else {
-      return this.initTimeSerie(tsType, tsName);
-    }
-  }
-  initTimeSerie(tsType, tsName) {
-    let allTS = getObjectProperty(this.timeSeries, tsType, {});
-    const nbucket = this.getTimeSerieSize(tsType, tsName);
-    let list = new Array(nbucket);
-    list.fill(0);
-    allTS[tsName] = list;
-    let newRefDate = 0;
-    let trd = 0;
-    const allTSmetadata = getObjectProperty(this.tsMetadata, tsType, {});
-    Object.keys(allTSmetadata).forEach((tsName2) => {
-      trd = this.getTimeSerieMetadata(
-        tsType,
-        tsName2,
-        _GlobalStatsTimeSeries.TS_METADATA.refDate,
-        0
-      );
-      if (trd > newRefDate) {
-        newRefDate = trd;
-      }
-    });
-    if (newRefDate === 0) {
-      const span = this.getTimeSerieSpan(tsType, tsName);
-      newRefDate = Date.now() + span;
-    }
-    this.setTimeSerieMetadata(
-      tsType,
-      tsName,
-      _GlobalStatsTimeSeries.TS_METADATA.refDate,
-      newRefDate
-    );
-    return list;
-  }
-  getTimeSerieSize(tsType, tsName) {
-    return this.getTimeSerieMetadata(
-      tsType,
-      tsName,
-      _GlobalStatsTimeSeries.TS_METADATA.size,
-      _GlobalStatsTimeSeries.FALLBACK_TS_SIZE
-    );
-  }
-  getTimeSerieSpan(tsType, tsName) {
-    return this.getTimeSerieMetadata(
-      tsType,
-      tsName,
-      _GlobalStatsTimeSeries.TS_METADATA.span,
-      _GlobalStatsTimeSeries.FALLBACK_TS_SPAN
-    );
-  }
-  getTimeSerieMetadata(tsType, tsName, metadataType, fallbackValue) {
-    let allTSmetadata = getObjectProperty(this.tsMetadata, tsType, {});
-    let metadataObj = getObjectProperty(allTSmetadata, tsName, {});
-    const typeDefaultValues = getObjectProperty(
-      _GlobalStatsTimeSeries.DEFAULT_TS_METADATA,
-      tsType,
-      {},
-      false
-    );
-    const defaultValue = getObjectProperty(typeDefaultValues, metadataType, fallbackValue, false);
-    let metadata = getObjectProperty(
-      metadataObj,
-      metadataType,
-      defaultValue
-    );
-    return metadata;
-  }
-  setTimeSerieMetadata(tsType, tsName, metadataType, newValue) {
-    let allTSmetadata = getObjectProperty(this.tsMetadata, tsType, {});
-    let metadataObj = getObjectProperty(allTSmetadata, tsName, {});
-    metadataObj[metadataType] = newValue;
-  }
-  slideAllTimeSeries(currentDate, tsType) {
-    let allTS = getObjectProperty(this.timeSeries, tsType, {});
-    Object.keys(allTS).forEach((tsName) => {
-      this.slideTimeSeries(currentDate, tsType, tsName);
-    });
-  }
-  slideTimeSeries(currentDate, tsType, tsName) {
-    const refDate = this.getTimeSerieMetadata(
-      tsType,
-      tsName,
-      _GlobalStatsTimeSeries.TS_METADATA.refDate,
-      0
-    );
-    const span = this.getTimeSerieSpan(tsType, tsName);
-    if (refDate === 0) {
-      this.setTimeSerieMetadata(
-        tsType,
-        tsName,
-        _GlobalStatsTimeSeries.TS_METADATA.refDate,
-        currentDate + span
-      );
-    } else if (currentDate - refDate >= 0) {
-      const nbucket = Math.ceil((currentDate - refDate) / span);
-      let allTS = getObjectProperty(this.timeSeries, tsType, {});
-      Object.values(allTS).forEach((list) => {
-        for (let i = 0; i < nbucket; i++) {
-          list.unshift(0);
-          list.pop();
-        }
-      });
-      this.setTimeSerieMetadata(
-        tsType,
-        tsName,
-        _GlobalStatsTimeSeries.TS_METADATA.refDate,
-        refDate + nbucket * span
-      );
-    }
-  }
-  processTip(userName, tip) {
-    const tsType = _GlobalStatsTimeSeries.TS_TYPES.userTips;
-    const span = this.getTimeSerieSpan(tsType, userName);
-    let list = this.getTimeSerie(tsType, userName);
-    const refDate = this.getTimeSerieMetadata(
-      tsType,
-      userName,
-      _GlobalStatsTimeSeries.TS_METADATA.refDate,
-      0
-    );
-    const maxDate = this.getTimeSerieMetadata(
-      tsType,
-      userName,
-      _GlobalStatsTimeSeries.TS_METADATA.maxDate,
-      0
-    );
-    if (tip.date > maxDate) {
-      let idx = Math.floor((refDate - tip.date) / span);
-      list[idx] = list[idx] + tip.tokens;
-      this.setTimeSerieMetadata(
-        tsType,
-        userName,
-        _GlobalStatsTimeSeries.TS_METADATA.maxDate,
-        tip.date
-      );
-    }
-  }
-};
-var GlobalStatsCompute = class {
-  constructor(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    const sObj = kv.get(KV_KEYS.currentSession);
-    this.sessionID = sObj.sessionID;
-    this.globalStatsTS = GlobalStatsTimeSeries.getFromKV(ctx);
-  }
-  static TIME_RANGE = {
-    ALL: 0,
-    min5: 5 * 60 * 1e3,
-    min15: 15 * 60 * 1e3
-  };
-  getTipSum(tsType, tsName, period) {
-    const list = this.globalStatsTS.getTimeSerie(tsType, tsName);
-    const span = this.globalStatsTS.getTimeSerieSpan(tsType, tsName);
-    const currentDate = Date.now();
-    const refDate = this.globalStatsTS.getTimeSerieMetadata(
-      tsType,
-      tsName,
-      GlobalStatsTimeSeries.TS_METADATA.refDate,
-      0
-    );
-    let sum = 0;
-    if (refDate <= currentDate) {
-      this.globalStatsTS.slideAllTimeSeries(currentDate, tsType);
-    }
-    if (period >= span) {
-      const idxStart = Math.floor((refDate - currentDate) / span);
-      const idxEnd = idxStart + Math.floor(period / span);
-      for (let index = idxStart; index < idxEnd; index++) {
-        sum = sum + list[index];
-      }
-    }
-    return sum;
-  }
-  getMaxTipper(period) {
-    const tsType = GlobalStatsTimeSeries.TS_TYPES.userTips;
-    const userNames = this.globalStatsTS.getTimeSerieNames(tsType);
-    let max = 0;
-    let uName = null;
-    userNames.forEach((tsName) => {
-      const sum = this.getTipSum(tsType, tsName, period);
-      if (sum > max) {
-        max = sum;
-        uName = tsName;
-      }
-    });
-    return { userName: uName, tokens: max };
-  }
-  getTotalTips(period, minTipsToAccount = 0) {
-    const tsType = GlobalStatsTimeSeries.TS_TYPES.userTips;
-    const userNames = this.globalStatsTS.getTimeSerieNames(tsType);
-    let total = 0;
-    let userCount = 0;
-    userNames.forEach((tsName) => {
-      const sum = this.getTipSum(tsType, tsName, period);
-      if (sum > minTipsToAccount) {
-        total = total + sum;
-        userCount = userCount + 1;
-      }
-    });
-    return { tokens: total, userCount };
-  }
-  getSessionTotalTips(ctx) {
-    const tsType = GlobalStatsTimeSeries.TS_TYPES.userTips;
-    const userNames = this.globalStatsTS.getTimeSerieNames(tsType);
-    let total = 0;
-    let userCount = 0;
-    userNames.forEach((tsName) => {
-      const tipInfo = UserTipInfo.getFromKV(ctx, tsName);
-      if (tipInfo.tipTotal > 0) {
-        total = total + tipInfo.tipTotal;
-        userCount = userCount + 1;
-      }
-    });
-    return { tokens: total, userCount };
+
+// src/js/app-module/CallbacksManager.mts
+var CALLBACKS_INFO = {
+  tipUpdateStatData: {
+    enabled: true,
+    func: tipUpdateStatData,
+    defaultDelay: 5,
+    defaultRepeating: true
   }
 };
 var CallbacksManager = class _CallbacksManager {
+  sessionID;
+  activeCallbacks;
   constructor(ctx) {
     const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    const sObj = kv.get(KV_KEYS.currentSession);
+    const sObj = Session.getCurrentSession(ctx);
     this.sessionID = sObj.sessionID;
     this.activeCallbacks = {};
   }
   static getFromKV(ctx) {
-    let manager = new _CallbacksManager(ctx);
+    const manager = new _CallbacksManager(ctx);
     manager.loadFromKV(ctx);
     return manager;
   }
   static initNewManager(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
     const oldManager = this.getFromKV(ctx);
     oldManager.cancelAll(ctx);
     kv.remove(KV_KEYS.callbacksManager);
@@ -1453,14 +878,14 @@ var CallbacksManager = class _CallbacksManager {
     return newManager;
   }
   loadFromKV(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    let manager = kv.get(KV_KEYS.callbacksManager, null);
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    const manager = kv.get(KV_KEYS.callbacksManager, null);
     if (manager) {
       this.activeCallbacks = manager.activeCallbacks;
     }
   }
   storeToKV(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
     kv.set(KV_KEYS.callbacksManager, this);
   }
   createAllDefaults(ctx) {
@@ -1468,12 +893,18 @@ var CallbacksManager = class _CallbacksManager {
     Object.keys(CALLBACKS_INFO).forEach((label) => {
       const cInfo = CALLBACKS_INFO[label];
       if (cInfo.enabled) {
-        this.create(ctx, label, cInfo.defaultDelay, cInfo.defaultRepeating, null);
+        this.create(
+          ctx,
+          label,
+          cInfo.defaultDelay,
+          cInfo.defaultRepeating,
+          null
+        );
       }
     });
   }
   create(ctx, label, delay = null, repeating = null, copyFrom = null) {
-    const { callback = null, user = null, room = null, kv = null, tip = null } = ctx;
+    const { callback, user = null, room = null, kv = null, tip = null } = ctx;
     let cInfo = null;
     let baseCallback = null;
     if (copyFrom) {
@@ -1496,7 +927,7 @@ var CallbacksManager = class _CallbacksManager {
     }
   }
   cancel(ctx, label) {
-    const { callback = null, user = null, room = null, kv = null, tip = null } = ctx;
+    const { callback, user = null, room = null, kv = null, tip = null } = ctx;
     callback.cancel(label);
     delete this.activeCallbacks[label];
   }
@@ -1507,7 +938,7 @@ var CallbacksManager = class _CallbacksManager {
     });
   }
   onEvent(ctx) {
-    const { callback = null, user = null, room = null, kv = null, tip = null } = ctx;
+    const { callback, user = null, room = null, kv = null, tip = null } = ctx;
     const label = callback.label;
     const aInfo = getObjectProperty(this.activeCallbacks, label, null);
     if (aInfo) {
@@ -1524,14 +955,17 @@ var CallbacksManager = class _CallbacksManager {
     }
   }
 };
+
+// src/js/app-module/ModuleBase.mts
 var ModuleBase = class {
+  sessionID;
+  data;
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  // ['constructor']: typeof ModuleBase;
   constructor(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-    let sObj = kv.get(KV_KEYS.currentSession, null);
-    if (!sObj) {
-      sessionManageEnter(ctx);
-      sObj = kv.get(KV_KEYS.currentSession);
-    }
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
+    const sObj = Session.getCurrentSession(ctx);
     this.sessionID = sObj.sessionID;
     this.data = {};
   }
@@ -1542,7 +976,7 @@ var ModuleBase = class {
   static CALLBACK_TEMPLATE = null;
   static SETTINGS_INFO = null;
   static getFromKV(ctx, classClass = this) {
-    let module = new classClass(ctx);
+    const module = new classClass(ctx);
     module.loadFromKV(ctx);
     return module;
   }
@@ -1572,7 +1006,7 @@ var ModuleBase = class {
     let settingObj = {};
     this.NAMES_IN_SETTINGS.forEach((name) => {
       settingObj = { name };
-      Object.entries(this.SETTINGS_INFO).forEach(([sName, sInfo]) => {
+      Object.entries(this.SETTINGS_INFO).forEach(([sName]) => {
         const settingName = this.getSettingName(sName, name);
         settingObj[sName] = SETTINGS[settingName];
       });
@@ -1584,7 +1018,7 @@ var ModuleBase = class {
     return this.constructor.name;
   }
   loadFromKV(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
     const kvKey = this.getKVKey();
     if (this.constructor.PERSIST_PROPERTIES) {
       const module = kv.get(kvKey, null);
@@ -1596,19 +1030,35 @@ var ModuleBase = class {
     }
   }
   storeToKV(ctx) {
-    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
+    const { message = null, user = null, room = null, kv, tip = null } = ctx;
     const kvKey = this.getKVKey();
     kv.set(kvKey, this);
   }
 };
+
+// src/js/app-module/ModuleChatFilter.mts
+var LEET_TABLE = {
+  a: ["@", "4"],
+  b: ["8"],
+  c: ["("],
+  e: ["3"],
+  g: ["6"],
+  h: ["#"],
+  i: ["!", "1"],
+  l: ["1"],
+  o: ["0"],
+  s: ["$"],
+  t: ["7"],
+  z: ["2"]
+};
 var ModuleChatFilter = class extends ModuleBase {
   onMessage(ctx) {
-    const { message = null, user = null, kv = null } = ctx;
+    const { message = null, user, kv = null } = ctx;
     const userName = user.username;
     UserChatInfo.sendPendingNotices(ctx, userName);
   }
   onMessageTransform(ctx) {
-    const { message = null, user = null, kv = null } = ctx;
+    const { message, user, kv = null } = ctx;
     let wordRegexString = "([a-zA-Z\xE0-\xFC\xC0-\xDC";
     Object.values(LEET_TABLE).forEach((l) => {
       l.forEach((c) => {
@@ -1630,7 +1080,7 @@ var ModuleChatFilter = class extends ModuleBase {
       return rl;
     }
     function leetString(str) {
-      let rl = [];
+      const rl = [];
       if (str.length > 1) {
         leetChar(str[0]).forEach((e1) => {
           leetString(str.substring(1)).forEach((e2) => {
@@ -1650,7 +1100,7 @@ var ModuleChatFilter = class extends ModuleBase {
     function stringSimilarity(str1, str2, gramSize = 3) {
       function getNGrams(s, len) {
         s = " ".repeat(len - 1) + s.toLowerCase() + " ".repeat(len - 1);
-        let v = new Array(s.length - len + 1);
+        const v = new Array(s.length - len + 1);
         for (let i = 0; i < v.length; i++) {
           v[i] = s.slice(i, i + len);
         }
@@ -1659,12 +1109,12 @@ var ModuleChatFilter = class extends ModuleBase {
       if (!(str1 === null || str1 === void 0 ? void 0 : str1.length) || !(str2 === null || str2 === void 0 ? void 0 : str2.length)) {
         return 0;
       }
-      let s1 = str1.length < str2.length ? str1 : str2;
-      let s2 = str1.length < str2.length ? str2 : str1;
-      let pairs1 = getNGrams(s1, gramSize);
-      let pairs2 = getNGrams(s2, gramSize);
-      let set = new Set(pairs1);
-      let total = pairs2.length;
+      const s1 = str1.length < str2.length ? str1 : str2;
+      const s2 = str1.length < str2.length ? str2 : str1;
+      const pairs1 = getNGrams(s1, gramSize);
+      const pairs2 = getNGrams(s2, gramSize);
+      const set = new Set(pairs1);
+      const total = pairs2.length;
       let hits = 0;
       for (let item of pairs2) {
         if (set.delete(item)) {
@@ -1712,11 +1162,11 @@ var ModuleChatFilter = class extends ModuleBase {
       }
       return false;
     }
-    function searchBadWord(badWordList, fuzzyScoreMin) {
+    function searchBadWord(wordsList, badWordList, fuzzyScoreMin) {
       const collator = Intl.Collator("en-US", { sensitivity: "base" });
-      let foundBadWords2 = [];
+      const foundBadWords2 = [];
       let found = false;
-      words.forEach((word) => {
+      wordsList.forEach((word) => {
         found = false;
         found = badWordList.some((bw) => {
           return compareWord(word, bw, collator, fuzzyScoreMin);
@@ -1729,7 +1179,7 @@ var ModuleChatFilter = class extends ModuleBase {
     }
     let newMessage = message.orig;
     let foundBadWords = [];
-    foundBadWords = searchBadWord(SETTINGS.chatBadWords, SETTINGS.chatFuzzyScoreForBW);
+    foundBadWords = searchBadWord(words, SETTINGS.chatBadWords, SETTINGS.chatFuzzyScoreForBW);
     if (foundBadWords.length > 0) {
       foundBadWords.forEach((bw) => {
         let newWord = bw.slice(0, 1);
@@ -1738,7 +1188,7 @@ var ModuleChatFilter = class extends ModuleBase {
         message.setBody(newMessage);
       });
     }
-    foundBadWords = searchBadWord(SETTINGS.chatVeryBadWords, SETTINGS.chatFuzzyScoreForVBW);
+    foundBadWords = searchBadWord(words, SETTINGS.chatVeryBadWords, SETTINGS.chatFuzzyScoreForVBW);
     if (foundBadWords.length > 0) {
       message.setSpam(true);
       const n = user.username + " " + SETTINGS.chatNoticeToUserVBW;
@@ -1746,11 +1196,15 @@ var ModuleChatFilter = class extends ModuleBase {
     }
   }
 };
+
+// src/js/app-module/ModuleTimer.mts
 var ModuleTimer = class _ModuleTimer extends ModuleBase {
+  liveTimers;
+  activeTimers;
+  activeCallbacks;
   constructor(ctx) {
     const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
     super(ctx);
-    this.TIMER_STATUS = this.constructor.TIMER_STATUS;
     this.liveTimers = {};
     this.activeTimers = {};
     this.activeCallbacks = {};
@@ -1776,16 +1230,8 @@ var ModuleTimer = class _ModuleTimer extends ModuleBase {
     moduleTimer._callback(ctx);
     moduleTimer.storeToKV(ctx);
   }
-  static TIMER_STATUS = {
-    running: "running",
-    frozen: "frozen",
-    justStoped: "justStoped",
-    unknown: "unknown",
-    created: "created",
-    deleted: "deleted"
-  };
   _callback(ctx) {
-    const { callback = null, user = null, room = null, kv = null, tip = null } = ctx;
+    const { callback, user = null, room = null, kv = null, tip = null } = ctx;
     const callbackLabel = callback.label;
     const timerName = getObjectProperty(this.activeCallbacks, callbackLabel, null, false);
     if (timerName) {
@@ -1813,21 +1259,21 @@ var ModuleTimer = class _ModuleTimer extends ModuleBase {
     };
     this.liveTimers[name] = timer;
     return {
-      status: this.TIMER_STATUS.created,
+      status: "created" /* created */,
       timerInfo: timer
     };
   }
   deleteLiveTimer(ctx, name) {
     this.stopTimer(ctx, name);
     delete this.liveTimers[name];
-    return { status: this.TIMER_STATUS.deleted };
+    return { status: "deleted" /* deleted */ };
   }
   startTimer(ctx, name) {
-    const availlableTimers = this.getAvaillableTimers(ctx);
+    const availlableTimers = this.getAvaillableTimers();
     const timer = getObjectProperty(availlableTimers, name, null, false);
     if (timer) {
       const oldStatus = getObjectProperty(this.activeTimers, name, null, false);
-      if (oldStatus && oldStatus.state === this.TIMER_STATUS.running) {
+      if (oldStatus && oldStatus.state === "running" /* running */) {
         return oldStatus.state;
       }
       let newStatus = null;
@@ -1835,7 +1281,7 @@ var ModuleTimer = class _ModuleTimer extends ModuleBase {
       let length = null;
       let repeating = null;
       let startCallback = false;
-      if (oldStatus && oldStatus.state === this.TIMER_STATUS.frozen) {
+      if (oldStatus && oldStatus.state === "frozen" /* frozen */) {
         newStatus = oldStatus;
         callbackLabel = oldStatus.callbackLabel;
         repeating = oldStatus.repeating;
@@ -1860,7 +1306,7 @@ var ModuleTimer = class _ModuleTimer extends ModuleBase {
       }
       if (startCallback) {
         newStatus.lastStartTime = Date.now();
-        newStatus.state = this.TIMER_STATUS.running;
+        newStatus.state = "running" /* running */;
         const callbacksManager = CallbacksManager.getFromKV(ctx);
         callbacksManager.create(
           ctx,
@@ -1872,11 +1318,11 @@ var ModuleTimer = class _ModuleTimer extends ModuleBase {
         this.activeTimers[name] = newStatus;
         this.activeCallbacks[callbackLabel] = name;
         callbacksManager.storeToKV(ctx);
-        return { status: this.TIMER_STATUS.running };
+        return { status: "running" /* running */ };
       }
-      return { status: this.TIMER_STATUS.unknown };
+      return { status: "unknown" /* unknown */ };
     } else {
-      return { status: this.TIMER_STATUS.unknown };
+      return { status: "unknown" /* unknown */ };
     }
   }
   freezeTimer(ctx, name) {
@@ -1885,7 +1331,7 @@ var ModuleTimer = class _ModuleTimer extends ModuleBase {
       const callbacksManager = CallbacksManager.getFromKV(ctx);
       callbacksManager.cancel(ctx, timerStatus.callbackLabel);
       delete this.activeCallbacks[timerStatus.callbackLabel];
-      timerStatus.state = this.TIMER_STATUS.frozen;
+      timerStatus.state = "frozen" /* frozen */;
       if (timerStatus.repeating) {
         timerStatus.remainingLength = timerStatus.timerLength;
       } else {
@@ -1893,9 +1339,9 @@ var ModuleTimer = class _ModuleTimer extends ModuleBase {
       }
       this.activeTimers[name] = timerStatus;
       callbacksManager.storeToKV(ctx);
-      return { status: this.TIMER_STATUS.frozen };
+      return { status: "frozen" /* frozen */ };
     } else {
-      return { status: this.TIMER_STATUS.unknown };
+      return { status: "unknown" /* unknown */ };
     }
   }
   stopTimer(ctx, name) {
@@ -1906,9 +1352,9 @@ var ModuleTimer = class _ModuleTimer extends ModuleBase {
       delete this.activeCallbacks[timerStatus.callbackLabel];
       delete this.activeTimers[name];
       callbacksManager.storeToKV(ctx);
-      return { status: this.TIMER_STATUS.justStoped };
+      return { status: "justStoped" /* justStoped */ };
     } else {
-      return { status: this.TIMER_STATUS.unknown };
+      return { status: "unknown" /* unknown */ };
     }
   }
   stopAllTimer(ctx) {
@@ -1920,8 +1366,8 @@ var ModuleTimer = class _ModuleTimer extends ModuleBase {
     });
     callbacksManager.storeToKV(ctx);
   }
-  getStatus(ctx) {
-    const availlableTimers = this.getAvaillableTimers(ctx);
+  getStatus() {
+    const availlableTimers = this.getAvaillableTimers();
     Object.entries(availlableTimers).forEach(([tName, tInfo]) => {
       if (Object.hasOwn(this.activeTimers, tName)) {
         const tStatus = this.activeTimers[tName];
@@ -1943,203 +1389,135 @@ var ModuleTimer = class _ModuleTimer extends ModuleBase {
     return timers;
   }
 };
-function commandProcessor(ctx) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  const userCap = getUserCapabilities(user);
-  function loopOnAvailableCommands(availableCommands, origBody2) {
-    const elements = origBody2.split(" ");
-    const commandName = elements[1];
-    const subCommand = elements[2];
-    let cmdFound = false;
-    availableCommands.forEach((c) => {
-      if (c.name === commandName && (c.capabilities & userCap) === c.capabilities) {
-        if (c.subCommand === void 0 || c.subCommand === subCommand) {
-          let args = [];
-          let cliInfo = {
-            commandName,
-            subCommand: null
-          };
-          if (c.subCommand === void 0) {
-            args = elements.slice(2);
-          } else {
-            args = elements.slice(3);
-            cliInfo.subCommand = c.subCommand;
-          }
-          cmdFound = true;
-          c.func(ctx, args, cliInfo);
-        }
-      }
-    });
-    if (!cmdFound) {
-      printCommandResult(ctx, "Command not found !", NOTICE_COLOR_THEME.error);
+
+// src/js/user-management.mts
+var DEFAULT_USER_RIGHTS = {
+  guru: 4294967295,
+  debug: 2 /* debugShow */ | 4 /* debugChange */,
+  owner: 8 /* settingsShow */ | 16 /* settingsSet */ | 32 /* statShow */ | 64 /* timerAdmin */ | 128 /* timerShow */,
+  admin: 8 /* settingsShow */ | 16 /* settingsSet */ | 32 /* statShow */ | 64 /* timerAdmin */ | 128 /* timerShow */,
+  monitor: 8 /* settingsShow */ | 128 /* timerShow */
+};
+function getUserCapabilities(userObj) {
+  const username = userObj.username;
+  let capabilities = 0;
+  if (SETTINGS.debugEnableRemoteUser && SETTINGS.debugAllowedUsernames && Array.isArray(SETTINGS.debugAllowedUsernames) && username && SETTINGS.debugAllowedUsernames.includes(username)) {
+    capabilities = capabilities | DEFAULT_USER_RIGHTS.debug;
+  }
+  if (userObj.colorGroup === CB_USER_GROUPS.owner.userColor || userObj.isOwner) {
+    capabilities = capabilities | DEFAULT_USER_RIGHTS.owner;
+    if (SETTINGS.debugAllowOwner) {
+      capabilities = capabilities | DEFAULT_USER_RIGHTS.debug;
     }
   }
-  const origBody = message.orig.trim();
-  if (origBody[0] === COMMAND_START_CHAR) {
-    if (origBody.startsWith(SETTINGS.cliBaseStaffCommand)) {
-      loopOnAvailableCommands(AVAILABLE_STAFF_COMMANDS, origBody);
-    } else if (origBody.startsWith(SETTINGS.cliBaseUserCommand)) {
-      loopOnAvailableCommands(AVAILABLE_USER_COMMANDS, origBody);
-    }
+  if (SETTINGS.userStaffMembersAdmin && Array.isArray(SETTINGS.userStaffMembersAdmin) && username && SETTINGS.userStaffMembersAdmin.includes(username)) {
+    capabilities = capabilities | DEFAULT_USER_RIGHTS.admin;
   }
-}
-function tipUpdateStatData(ctx) {
-  const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-  const globalTipStat = GlobalStatsTimeSeries.getFromKV(ctx);
-  const currentDate = Date.now();
-  globalTipStat.slideAllTimeSeries(currentDate, GlobalStatsTimeSeries.TS_TYPES.userTips);
-  const keysMap = kv.get(KV_KEYS.userTipsKeysMap, {});
-  const keyList = Object.keys(keysMap);
-  keyList.forEach((userName) => {
-    let userTipInfo = UserTipInfo.getFromKV(ctx, userName);
-    let extendedTip = {};
-    while (typeof (extendedTip = userTipInfo.tipList.shift()) !== "undefined") {
-      globalTipStat.processTip(userName, extendedTip);
-    }
-    userTipInfo.storeToKV(ctx);
-  });
-  globalTipStat.storeToKV(ctx);
-}
-function onTipReceived(ctx) {
-  const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-  UserTipInfo.updateUserTips(ctx);
-}
-function onMessage(ctx) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  const origBody = message.orig.trim();
-  if (origBody[0] === COMMAND_START_CHAR) {
-    commandProcessor(ctx);
+  if (SETTINGS.userStaffMembersMonitor && Array.isArray(SETTINGS.userStaffMembersMonitor) && username && SETTINGS.userStaffMembersMonitor.includes(username)) {
+    capabilities = capabilities | DEFAULT_USER_RIGHTS.monitor;
   }
-  const chatFilter = ModuleChatFilter.getFromKV(ctx);
-  chatFilter.onMessage(ctx);
-  chatFilter.storeToKV(ctx);
+  return capabilities;
 }
-function onMessageTransform(ctx) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
-  const origBody = message.orig.trim();
-  if (origBody[0] === COMMAND_START_CHAR) {
-    if (origBody.startsWith(SETTINGS.cliBaseStaffCommand) && !SETTINGS.cliBroadcastStaffCmd) {
-      message.setSpam(true);
-    } else if (origBody.startsWith(SETTINGS.cliBaseUserCommand) && !SETTINGS.cliBroadcastUserCmd) {
-      message.setSpam(true);
-    }
-  } else {
-    const chatFilter = ModuleChatFilter.getFromKV(ctx);
-    chatFilter.onMessageTransform(ctx);
-    chatFilter.storeToKV(ctx);
+
+// src/js/command/command-debug.mts
+var AVAILABLE_STAFF_COMMANDS = [
+  {
+    name: "debug",
+    subCommand: "clearKV",
+    capabilities: 4 /* debugChange */,
+    func: debugClearKV,
+    help: "clearing KV or removing KV entry"
+  },
+  {
+    name: "debug",
+    subCommand: "printKV",
+    capabilities: 2 /* debugShow */,
+    func: debugPrintKV,
+    help: "printing some KV content for dev/debug"
+  },
+  {
+    name: "debug",
+    subCommand: "sessionClear",
+    capabilities: 4 /* debugChange */,
+    func: debugSessionClear,
+    help: "clear current session data"
+  },
+  {
+    name: "debug",
+    subCommand: "sessionInit",
+    capabilities: 4 /* debugChange */,
+    func: debugSessionInit,
+    help: "init a new session"
+  },
+  {
+    name: "debug",
+    subCommand: "sessionEnter",
+    capabilities: 4 /* debugChange */,
+    func: debugSessionEnter,
+    help: "Call sessionEnter handler"
+  },
+  {
+    name: "debug",
+    subCommand: "sessionLeave",
+    capabilities: 4 /* debugChange */,
+    func: debugSessionLeave,
+    help: "Call sessionLeave handler"
+  },
+  {
+    name: "debug",
+    subCommand: "callbackEnable",
+    capabilities: 4 /* debugChange */,
+    func: debugEnableCallbacks,
+    help: "enable default callback"
+  },
+  {
+    name: "debug",
+    subCommand: "callbackCancel",
+    capabilities: 4 /* debugChange */,
+    func: debugCancelCallbacks,
+    help: "cancel all callback"
+  },
+  {
+    name: "debug",
+    subCommand: "printTips",
+    capabilities: 2 /* debugShow */,
+    func: debugPrintTips,
+    help: "printing user tips info for dev/debug"
+  },
+  {
+    name: "debug",
+    subCommand: "clearTips",
+    capabilities: 4 /* debugChange */,
+    func: debugClearTips,
+    help: "clear user tips info"
+  },
+  {
+    name: "debug",
+    subCommand: "processTips",
+    capabilities: 4 /* debugChange */,
+    func: debugProcessTips,
+    help: "process user tipsinfo and update stats"
+  },
+  {
+    name: "debug",
+    subCommand: "statsClear",
+    capabilities: 4 /* debugChange */,
+    func: debugClearStats,
+    help: "clear Stats"
+  },
+  {
+    name: "debug",
+    subCommand: "statsPrint",
+    capabilities: 4 /* debugChange */,
+    func: debugPrintStats,
+    help: "printing Stats"
   }
-}
-function onAppStart(ctx) {
-  const { app = null, user = null, room = null, kv = null, tip = null } = ctx;
-  const sObj = kv.get(KV_KEYS.currentSession, null);
-  if (!sObj) {
-    sessionManageEnter(ctx);
-  }
-  const m = `\u26A1\uFE0F ${app.name} (v${app.version}) has started.`;
-  printToOwner(ctx, m, NOTICE_COLOR_THEME.staff);
-  const manager = CallbacksManager.initNewManager(ctx);
-  manager.createAllDefaults(ctx);
-  manager.storeToKV(ctx);
-  logIt("App started");
-}
-function onAppStop(ctx) {
-  const { app = null, user = null, room = null, kv = null, tip = null } = ctx;
-  const m = `\u26A1\uFE0F ${app.name} has stopped`;
-  printToOwner(ctx, m, NOTICE_COLOR_THEME.staff);
-  logIt("App stoped");
-}
-function onBroadcastStart(ctx) {
-  sessionManageEnter(ctx);
-  logIt("Broadcast started YOOOUUUUPPPIIIII");
-}
-function onBroadcastStop(ctx) {
-  sessionManageLeave(ctx);
-  logIt("Broadcast stoped,  gniininii");
-}
-function onUserEnter(ctx) {
-  const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-  if (user.isOwner || user.colorGroup === CB_USER_GROUPS.owner.userColor) {
-    sessionManageEnter(ctx);
-  }
-}
-function onUserLeave(ctx) {
-  const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-  if (user.isOwner || user.colorGroup === CB_USER_GROUPS.owner.userColor) {
-    sessionManageLeave(ctx);
-  }
-}
-function onCallback(ctx) {
-  const { callback = null, user = null, room = null, kv = null, tip = null } = ctx;
-  const manager = CallbacksManager.getFromKV(ctx);
-  manager.onEvent(ctx);
-}
-function logIt(message) {
-  const stack = new Error().stack;
-  const caller = stack.split("\n")[2].trim().split(/\s+/)[1];
-  console.log(message + "\nCaller ----> " + caller);
-}
-function getObjectProperty(obj, prop, defaultValue = null, updateObject = true) {
-  if (Object.hasOwn(obj, prop)) {
-    return obj[prop];
-  } else {
-    if (updateObject) {
-      obj[prop] = defaultValue;
-    }
-    return defaultValue;
-  }
-}
-function debugEnableCallbacks(ctx) {
-  const manager = CallbacksManager.getFromKV(ctx);
-  manager.createAllDefaults(ctx);
-  manager.storeToKV(ctx);
-}
-function debugCancelCallbacks(ctx) {
-  const manager = CallbacksManager.getFromKV(ctx);
-  manager.cancelAll(ctx);
-  manager.storeToKV(ctx);
-}
-function debugGlobalStatInit(ctx) {
-  GlobalStatsTimeSeries.initNewStatObj(ctx);
-}
-function debugSessionInit(ctx) {
-  Session.initNewSession(ctx);
-}
-function debugSessionCreate(ctx) {
-  sessionManageEnter(ctx, true);
-}
-function debugSessionClear(ctx) {
-  Session.clear(ctx);
-}
-function debugProcessTips(ctx) {
-  tipUpdateStatData(ctx);
-}
-function debugClearTips(ctx) {
-  UserTipInfo.clearAll(ctx);
-}
-function debugClearStats(ctx) {
-  const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-  kv.remove(KV_KEYS.currentGlobalStatsTS);
-}
-function debugPrintTips(ctx) {
-  const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-  const keysMap = kv.get(KV_KEYS.userTipsKeysMap, {});
-  const keyList = Object.keys(keysMap);
-  let l = [];
-  keyList.forEach((userName) => {
-    let userTipInfo = UserTipInfo.getFromKV(ctx, userName);
-    l.push(userTipInfo.toString());
-  });
-  let m = l.join("\n");
-  printCommandResult(ctx, m, NOTICE_COLOR_THEME.staff);
-}
-function debugPrintStats(ctx) {
-  const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
-  const stat = GlobalStatsTimeSeries.getFromKV(ctx);
-  logIt("Stats are");
-  console.log(stat);
+];
+function init() {
+  extendAvaillableStaffCommands(AVAILABLE_STAFF_COMMANDS);
 }
 function debugClearKV(ctx, args) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
+  const { message = null, user = null, room = null, kv } = ctx;
   if (args && args.length === 1) {
     const key = args[0];
     kv.remove(key);
@@ -2148,7 +1526,7 @@ function debugClearKV(ctx, args) {
   }
 }
 function debugPrintKV(ctx) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
+  const { message = null, user = null, room = null, kv } = ctx;
   let v = null;
   let m = "";
   Object.values(KV_KEYS).forEach((key) => {
@@ -2161,17 +1539,371 @@ function debugPrintKV(ctx) {
     }
   });
 }
-function testExtendClass(ctx) {
+function debugSessionInit(ctx) {
+  Session.initNewSession(ctx);
+}
+function debugSessionEnter(ctx) {
+  sessionManageEnter(ctx, true);
+}
+function debugSessionLeave(ctx) {
+  sessionManageLeave(ctx);
+}
+function debugSessionClear(ctx) {
+  Session.clear(ctx);
+}
+function debugEnableCallbacks(ctx) {
+  const manager = CallbacksManager.getFromKV(ctx);
+  manager.createAllDefaults(ctx);
+  manager.storeToKV(ctx);
+}
+function debugCancelCallbacks(ctx) {
+  const manager = CallbacksManager.getFromKV(ctx);
+  manager.cancelAll(ctx);
+  manager.storeToKV(ctx);
+}
+function debugPrintTips(ctx) {
+  const { message = null, user = null, room = null, kv, tip = null } = ctx;
+  const keysMap = kv.get(KV_KEYS.userTipsKeysMap, {});
+  const keyList = Object.keys(keysMap);
+  const l = [];
+  keyList.forEach((userName) => {
+    const userTipInfo = UserTipInfo.getFromKV(ctx, userName);
+    l.push(userTipInfo.toString());
+  });
+  const m = l.join("\n");
+  printCommandResult(ctx, m, NOTICE_COLOR_THEME.staff);
+}
+function debugProcessTips(ctx) {
+  tipUpdateStatData(ctx);
+}
+function debugClearTips(ctx) {
+  UserTipInfo.clearAll(ctx);
+}
+function debugClearStats(ctx) {
+  const { message = null, user = null, room = null, kv, tip = null } = ctx;
+  kv.remove(KV_KEYS.currentGlobalStatsTS);
+}
+function debugPrintStats(ctx) {
+  const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
+  const stat = GlobalStatsTimeSeries.getFromKV(ctx);
+  logIt("Stats are");
+  console.log(stat);
+}
+
+// src/js/command/command-help.mts
+var LOCAL_AVAILABLE_STAFF_COMMANDS = [
+  { name: "help", capabilities: 0, func: cliHelpShowHelp, help: "Need Help ?" }
+];
+var LOCAL_AVAILABLE_USER_COMMANDS = [
+  { name: "help", capabilities: 0, func: cliHelpShowHelp, help: "Need Help ?" }
+];
+function init2() {
+  extendAvaillableStaffCommands(LOCAL_AVAILABLE_STAFF_COMMANDS);
+  extendAvaillableUserCommands(LOCAL_AVAILABLE_USER_COMMANDS);
+}
+function cliHelpShowHelp(ctx) {
+  const { user, room = null, kv = null } = ctx;
+  const userCap = getUserCapabilities(user);
+  function loopOnAvailableCommands(availableCommands, baseCmd) {
+    let message2 = "";
+    availableCommands.forEach((c) => {
+      if ((c.capabilities & userCap) === c.capabilities) {
+        if (c.subCommand === void 0) {
+          message2 = `${message2} ${baseCmd} ${c.name} 	 -> ${c.help} 
+`;
+        } else {
+          message2 = `${message2} ${baseCmd} ${c.name} ${c.subCommand} 	 -> ${c.help} 
+`;
+        }
+      }
+    });
+    return message2;
+  }
+  let message = "Here the commands availlable to you:\n";
+  message = message + loopOnAvailableCommands(AVAILABLE_STAFF_COMMANDS2, SETTINGS.cliBaseStaffCommand);
+  message = message + loopOnAvailableCommands(AVAILABLE_USER_COMMANDS, SETTINGS.cliBaseUserCommand);
+  printCommandResult(ctx, message, NOTICE_COLOR_THEME.help);
+}
+
+// src/js/command/command-setting.mts
+var AVAILABLE_STAFF_COMMANDS3 = [
+  {
+    name: "settings",
+    subCommand: "show",
+    capabilities: 8 /* settingsShow */,
+    func: cliSettingShowSettings,
+    help: "showing current settings"
+  },
+  {
+    name: "settings",
+    subCommand: "showlive",
+    capabilities: 8 /* settingsShow */,
+    func: cliSettingShowLiveSettings,
+    help: "showing overriding settings, stored in KV"
+  },
+  {
+    name: "settings",
+    subCommand: "setlive",
+    capabilities: 16 /* settingsSet */,
+    func: cliSettingSetLiveSetting,
+    help: "override a setting"
+  },
+  {
+    name: "settings",
+    subCommand: "clearlive",
+    capabilities: 16 /* settingsSet */,
+    func: cliSettingClearLiveSetting,
+    help: "clear an overrided setting"
+  },
+  {
+    name: "settings",
+    subCommand: "clearliveall",
+    capabilities: 16 /* settingsSet */,
+    func: cliSettingClearAllLiveSettings,
+    help: "clear all overrided settings"
+  }
+];
+function init3() {
+  extendAvaillableStaffCommands(AVAILABLE_STAFF_COMMANDS3);
+}
+function cliSettingShowSettings(ctx) {
   const { message = null, user = null, room = null, kv = null } = ctx;
-  let m = ModuleChatFilter.getFromKV(ctx);
+  printCommandResult(ctx, JSON.stringify(SETTINGS, null, "	"), NOTICE_COLOR_THEME.staff);
+}
+function cliSettingSetLiveSetting(ctx, args) {
+  const { message = null, user = null, room = null, kv } = ctx;
+  if (args.length > 1) {
+    const key = args[0];
+    const v = args[1];
+    if (Object.hasOwn(SETTINGS_INFO, key)) {
+      const sInfo = SETTINGS_INFO[key];
+      const { defaultValue = null, liveUpdate = null, convert = null } = sInfo;
+      if (liveUpdate) {
+        let settings = {};
+        settings = kv.get(KV_KEYS.liveSettings, {});
+        if (convert && v) {
+          let c = null;
+          let l = null;
+          let nv = null;
+          switch (convert) {
+            case SETTINGS_CONVERT.number:
+              c = parseInt(v);
+              if (typeof c === "number" && c) {
+                settings[key] = c;
+              } else {
+                settings[key] = defaultValue;
+              }
+              break;
+            case SETTINGS_CONVERT.listString:
+              l = v.split(CB_SETTINGS_LIST_SEPARATOR);
+              nv = [];
+              l.forEach((u) => {
+                nv.push(u.trim());
+              });
+              settings[key] = nv;
+              break;
+            case SETTINGS_CONVERT.boolean:
+              c = parseInt(v);
+              if (v === "true") {
+                settings[key] = true;
+              } else if (v === "false") {
+                settings[key] = false;
+              } else {
+                settings[key] = defaultValue;
+              }
+              break;
+            default:
+              settings[key] = v;
+              break;
+          }
+        } else {
+          settings[key] = v;
+        }
+        kv.set(KV_KEYS.liveSettings, settings);
+      }
+    }
+  }
+}
+function cliSettingClearLiveSetting(ctx, args) {
+  const { message = null, user = null, room = null, kv } = ctx;
+  if (args.length === 1) {
+    const key = args[0];
+    if (Object.hasOwn(SETTINGS_INFO, key)) {
+      const sInfo = SETTINGS_INFO[key];
+      const { liveUpdate = null } = sInfo;
+      if (liveUpdate) {
+        let settings = {};
+        settings = kv.get(KV_KEYS.liveSettings, {});
+        delete settings[key];
+        kv.set(KV_KEYS.liveSettings, settings);
+      }
+    }
+  }
+}
+function cliSettingClearAllLiveSettings(ctx) {
+  const { message = null, user = null, room = null, kv } = ctx;
+  const settings = {};
+  kv.set(KV_KEYS.liveSettings, settings);
+}
+function cliSettingShowLiveSettings(ctx) {
+  const { message = null, user = null, room = null, kv } = ctx;
+  const settings = kv.get(KV_KEYS.liveSettings, {});
+  printCommandResult(ctx, JSON.stringify(settings, null, "	"), NOTICE_COLOR_THEME.staff);
+}
+
+// src/js/app-module/GlobalStatsCompute.mts
+var GlobalStatsCompute = class {
+  sessionID;
+  globalStatsTS;
+  constructor(ctx) {
+    const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
+    const sObj = Session.getCurrentSession(ctx);
+    this.sessionID = sObj.sessionID;
+    this.globalStatsTS = GlobalStatsTimeSeries.getFromKV(ctx);
+  }
+  static TIME_RANGE = {
+    ALL: 0,
+    min5: 5 * 60 * 1e3,
+    min15: 15 * 60 * 1e3
+  };
+  getTipSum(tsType, tsName, period) {
+    const list = this.globalStatsTS.getTimeSerie(tsType, tsName);
+    const span = this.globalStatsTS.getTimeSerieSpan(tsType, tsName);
+    const currentDate = Date.now();
+    const refDate = this.globalStatsTS.getTimeSerieMetadata(
+      tsType,
+      tsName,
+      "refDate" /* refDate */,
+      0
+    );
+    let sum = 0;
+    if (refDate <= currentDate) {
+      this.globalStatsTS.slideAllTimeSeries(currentDate, tsType);
+    }
+    if (period >= span) {
+      const idxStart = Math.floor((refDate - currentDate) / span);
+      const idxEnd = idxStart + Math.floor(period / span);
+      for (let index = idxStart; index < idxEnd; index++) {
+        sum = sum + list[index];
+      }
+    }
+    return sum;
+  }
+  getMaxTipper(period) {
+    const tsType = "userTips" /* userTips */;
+    const userNames = this.globalStatsTS.getTimeSerieNames(tsType);
+    let max = 0;
+    let uName = null;
+    userNames.forEach((tsName) => {
+      const sum = this.getTipSum(tsType, tsName, period);
+      if (sum > max) {
+        max = sum;
+        uName = tsName;
+      }
+    });
+    return { userName: uName, tokens: max };
+  }
+  getTotalTips(period, minTipsToAccount = 0) {
+    const tsType = "userTips" /* userTips */;
+    const userNames = this.globalStatsTS.getTimeSerieNames(tsType);
+    let total = 0;
+    let userCount = 0;
+    userNames.forEach((tsName) => {
+      const sum = this.getTipSum(tsType, tsName, period);
+      if (sum > minTipsToAccount) {
+        total = total + sum;
+        userCount = userCount + 1;
+      }
+    });
+    return { tokens: total, userCount };
+  }
+  getSessionTotalTips(ctx) {
+    const tsType = "userTips" /* userTips */;
+    const userNames = this.globalStatsTS.getTimeSerieNames(tsType);
+    let total = 0;
+    let userCount = 0;
+    userNames.forEach((tsName) => {
+      const tipInfo = UserTipInfo.getFromKV(ctx, tsName);
+      if (tipInfo.tipTotal > 0) {
+        total = total + tipInfo.tipTotal;
+        userCount = userCount + 1;
+      }
+    });
+    return { tokens: total, userCount };
+  }
+};
+
+// src/js/command/command-stat.mts
+var AVAILABLE_STAFF_COMMANDS4 = [
+  {
+    name: "stat",
+    subCommand: "showTips",
+    capabilities: 32 /* statShow */,
+    func: cliStatShowTipStats,
+    help: "show Stats about tips"
+  }
+];
+function init4() {
+  extendAvaillableStaffCommands(AVAILABLE_STAFF_COMMANDS4);
+}
+function cliStatShowTipStats(ctx) {
+  const { message = null, user = null, room = null, kv = null } = ctx;
+  const statCompute = new GlobalStatsCompute(ctx);
+  const p5min = 5 * 60 * 1e3;
+  const bt5min = statCompute.getMaxTipper(p5min);
+  const tot5min0tk = statCompute.getTotalTips(p5min, 0);
+  const tot5min5tk = statCompute.getTotalTips(p5min, 5);
+  const totSession = statCompute.getSessionTotalTips(ctx);
+  const msg = `Some Stats:
+    - Best Tipper in last 5 minutes: ${bt5min.userName} (${bt5min.tokens} tokens)
+    - Total Tips  in last 5 minutes:     ${tot5min0tk.tokens} (${tot5min0tk.userCount} users)
+    - Total Big Tips  in last 5 minutes: ${tot5min5tk.tokens} (${tot5min5tk.userCount} users)
+    - Total Tips in current Session: ${totSession.tokens} (${totSession.userCount} users)`;
+  printCommandResult(ctx, msg, NOTICE_COLOR_THEME.staff);
+}
+
+// src/js/command/command-test.mts
+var AVAILABLE_STAFF_COMMANDS5 = [
+  {
+    name: "test",
+    subCommand: "perfkv",
+    capabilities: 4 /* debugChange */,
+    func: testPerfKV,
+    help: "some KV perf testing"
+  },
+  {
+    name: "test",
+    subCommand: "getID",
+    capabilities: 4 /* debugChange */,
+    func: testRandomID,
+    help: "testing ID generation"
+  }
+  // { name: 'test', subCommand: 'testExtend', capabilities: CAPABILITY.debugChange, 
+  // func: testExtendClass, help: 'test JS extend classes' },
+];
+var AVAILABLE_USER_COMMANDS2 = [
+  { name: "debug", subCommand: "test", capabilities: 0, func: testDebugCommand, help: "some testing" }
+];
+function init5() {
+  extendAvaillableStaffCommands(AVAILABLE_STAFF_COMMANDS5);
+  extendAvaillableUserCommands(AVAILABLE_USER_COMMANDS2);
+}
+function testRandomID(ctx) {
+  const { message = null, user = null, room = null, kv = null } = ctx;
+  let m = getRandomID();
+  printCommandResult(ctx, m, NOTICE_COLOR_THEME.staff);
+  m = getRandomID(4);
+  printCommandResult(ctx, m, NOTICE_COLOR_THEME.staff);
+  m = getRandomID(8);
+  printCommandResult(ctx, m, NOTICE_COLOR_THEME.staff);
 }
 function testDebugCommand(ctx) {
   printCommandResult(ctx, "Good you can run a command", NOTICE_COLOR_THEME.help);
 }
 function testPerfKV(ctx) {
-  const { message = null, user = null, room = null, kv = null } = ctx;
+  const { message, user = null, room = null, kv } = ctx;
   logIt("testing KV perf");
-  let origBody = message.orig.trim().toLowerCase();
+  const origBody = message.orig.trim().toLowerCase();
   const elements = origBody.split(" ");
   const action = elements[3];
   if ("init" === action) {
@@ -2197,8 +1929,341 @@ function testPerfKV(ctx) {
     }
   }
 }
-function pouet() {
-  var CBentryPoints = [
+
+// src/js/command/command-timer.mts
+var AVAILABLE_STAFF_COMMANDS6 = [
+  {
+    name: "timer",
+    subCommand: "start",
+    capabilities: 64 /* timerAdmin */,
+    func: cliTimerStart,
+    help: "Start timer"
+  },
+  {
+    name: "timer",
+    subCommand: "stop",
+    capabilities: 64 /* timerAdmin */,
+    func: cliTimerStop,
+    help: "Stop timer"
+  },
+  {
+    name: "timer",
+    subCommand: "stopall",
+    capabilities: 64 /* timerAdmin */,
+    func: cliTimerStopAll,
+    help: "Stop All timers"
+  },
+  {
+    name: "timer",
+    subCommand: "freeze",
+    capabilities: 64 /* timerAdmin */,
+    func: cliTimerFreeze,
+    help: "Freeze timer"
+  },
+  {
+    name: "timer",
+    subCommand: "list",
+    capabilities: 128 /* timerShow */,
+    func: cliTimerListTimers,
+    help: "List timers"
+  },
+  {
+    name: "timer",
+    subCommand: "add",
+    capabilities: 64 /* timerAdmin */,
+    func: cliTimerAddTimer,
+    help: "Add a timer"
+  },
+  {
+    name: "timer",
+    subCommand: "delete",
+    capabilities: 64 /* timerAdmin */,
+    func: cliTimerdeleteTimer,
+    help: "delete a timer"
+  }
+];
+function init6() {
+  extendAvaillableStaffCommands(AVAILABLE_STAFF_COMMANDS6);
+}
+function cliTimerStart(ctx, args, cliInfo) {
+  if (args.length === 1) {
+    const moduleTimer = ModuleTimer.getFromKV(ctx);
+    const name = args[0];
+    const result = moduleTimer.startTimer(ctx, name);
+    if (result.status === "running" /* running */) {
+      moduleTimer.storeToKV(ctx);
+      console.log(moduleTimer);
+      printCommandResult(ctx, "Timer started: " + name, NOTICE_COLOR_THEME.staff);
+    } else if (result.status === "unknown" /* unknown */) {
+      printCommandResult(ctx, "Timer unknown: " + name, NOTICE_COLOR_THEME.error);
+    } else {
+      printCommandResult(ctx, "Timer, unknown error: " + name, NOTICE_COLOR_THEME.error);
+    }
+  } else {
+    const msg = `Please choose a timer
+        ${COMMAND_START_CHAR}${SETTINGS.cliBaseStaffCommand} ${cliInfo.commandName} ${cliInfo.subCommand} <timerName>`;
+    printCommandResult(ctx, msg, NOTICE_COLOR_THEME.error);
+  }
+}
+function cliTimerFreeze(ctx, args, cliInfo) {
+  if (args.length === 1) {
+    const moduleTImer = ModuleTimer.getFromKV(ctx);
+    const name = args[0];
+    const result = moduleTImer.freezeTimer(ctx, name);
+    if (result.status === "frozen" /* frozen */) {
+      moduleTImer.storeToKV(ctx);
+      printCommandResult(ctx, "Timer frozen: " + name, NOTICE_COLOR_THEME.staff);
+    } else if (result.status === "unknown" /* unknown */) {
+      printCommandResult(ctx, "Timer unknown: " + name, NOTICE_COLOR_THEME.error);
+    } else {
+      printCommandResult(ctx, "Timer, unknown error: " + name, NOTICE_COLOR_THEME.error);
+    }
+  } else {
+    const msg = `Please choose a timer
+        ${COMMAND_START_CHAR}${cliInfo.commandName} ${cliInfo.subCommand} <timerName>`;
+    printCommandResult(ctx, msg, NOTICE_COLOR_THEME.error);
+  }
+}
+function cliTimerStop(ctx, args, cliInfo) {
+  if (args.length === 1) {
+    const moduleTimer = ModuleTimer.getFromKV(ctx);
+    const name = args[0];
+    const result = moduleTimer.stopTimer(ctx, name);
+    if (result.status === "justStoped" /* justStoped */) {
+      moduleTimer.storeToKV(ctx);
+      printCommandResult(ctx, "Timer stoped: " + name, NOTICE_COLOR_THEME.staff);
+    } else if (result.status === "unknown" /* unknown */) {
+      printCommandResult(ctx, "Timer unknown: " + name, NOTICE_COLOR_THEME.error);
+    } else {
+      printCommandResult(ctx, "Timer, unknown error: " + name, NOTICE_COLOR_THEME.error);
+    }
+  } else {
+    const msg = `Please choose a timer
+        ${COMMAND_START_CHAR}${cliInfo.commandName} ${cliInfo.subCommand} <timerName>`;
+    printCommandResult(ctx, msg, NOTICE_COLOR_THEME.error);
+  }
+}
+function cliTimerStopAll(ctx) {
+  const moduleTImer = ModuleTimer.getFromKV(ctx);
+  moduleTImer.stopAllTimer(ctx);
+  moduleTImer.storeToKV(ctx);
+  cliTimerListTimers(ctx);
+}
+function cliTimerAddTimer(ctx, args, cliInfo) {
+  if (args.length >= 2) {
+    const moduleTimer = ModuleTimer.getFromKV(ctx);
+    const timerLength = parseInt(args[0]);
+    const timerMessage = args.slice(1).join(" ");
+    const existingNames = Object.keys(moduleTimer.getAvaillableTimers());
+    let timerName = null;
+    AVAILLABLE_LIVE_SETTINGS_NAMES.some((pName) => {
+      if (!existingNames.includes(pName)) {
+        timerName = pName;
+        return true;
+      }
+    });
+    if (timerName && timerLength) {
+      const result = moduleTimer.addLiveTimer(ctx, timerName, timerLength, timerMessage, false);
+      moduleTimer.storeToKV(ctx);
+      const msg = `OK: timer ${result.timerInfo.name} created`;
+      printCommandResult(ctx, msg, NOTICE_COLOR_THEME.staff);
+    } else {
+      let msg = "";
+      if (!timerLength) {
+        msg = msg + "ERROR: length not correct: " + args[0] + " \n";
+      }
+      if (!timerName) {
+        msg = msg + "ERROR: No free timer name\n";
+      }
+      msg = msg + `${COMMAND_START_CHAR}${cliInfo.commandName} ${cliInfo.subCommand} <length in sec> <message>`;
+      printCommandResult(ctx, msg, NOTICE_COLOR_THEME.error);
+    }
+  } else {
+    const msg = `Please enter timer infos
+        ${COMMAND_START_CHAR}${cliInfo.commandName} ${cliInfo.subCommand} <length in sec> <message>`;
+    printCommandResult(ctx, msg, NOTICE_COLOR_THEME.error);
+  }
+}
+function cliTimerdeleteTimer(ctx, args, cliInfo) {
+  if (args.length === 1) {
+    const moduleTimer = ModuleTimer.getFromKV(ctx);
+    const name = args[0];
+    const existingNames = Object.keys(moduleTimer.liveTimers);
+    if (existingNames.includes(name)) {
+      const result = moduleTimer.deleteLiveTimer(ctx, name);
+      if (result.status === "deleted" /* deleted */) {
+        moduleTimer.storeToKV(ctx);
+        printCommandResult(ctx, "Timer deleted: " + name, NOTICE_COLOR_THEME.staff);
+      }
+    } else {
+      printCommandResult(ctx, "Timer not found or Static Timer: " + name, NOTICE_COLOR_THEME.error);
+    }
+  } else {
+    const msg = `Please choose a timer
+        ${COMMAND_START_CHAR}${cliInfo.commandName} ${cliInfo.subCommand} <timerName>`;
+    printCommandResult(ctx, msg, NOTICE_COLOR_THEME.error);
+  }
+}
+function cliTimerListTimers(ctx) {
+  const moduleTimer = ModuleTimer.getFromKV(ctx);
+  const timers = moduleTimer.getStatus();
+  let msg = `Timers list:`;
+  let m = "";
+  console.log(timers);
+  Object.entries(timers).forEach(([tName, tInfo]) => {
+    if (typeof tInfo.state === "undefined") {
+      m = `${tName}: ${tInfo.length}sec '${tInfo.message}'`;
+    } else if (tInfo.state === "running" /* running */) {
+      m = `${tName}: ${tInfo.length}sec ${tInfo.state} ${tInfo.timerLength - Math.round((Date.now() - tInfo.lastStartTime) / 1e3)}sec rem '${tInfo.message}'`;
+    } else if (tInfo.state === "frozen" /* frozen */) {
+      m = `${tName}: ${tInfo.length}sec ${tInfo.state} ${tInfo.remainingLength}sec remaining '${tInfo.message}'`;
+    }
+    msg = `${msg}
+        ${m}`;
+  });
+  printCommandResult(ctx, msg, NOTICE_COLOR_THEME.staff);
+}
+
+// src/js/command/command-processor.mts
+function createCommandsList() {
+  init5();
+  init();
+  init3();
+  init4();
+  init6();
+  init2();
+}
+var AVAILABLE_STAFF_COMMANDS2 = [];
+var AVAILABLE_USER_COMMANDS = [];
+function extendAvaillableStaffCommands(commandList) {
+  commandList.forEach((command) => {
+    AVAILABLE_STAFF_COMMANDS2.push(command);
+  });
+  console.log(AVAILABLE_STAFF_COMMANDS2);
+}
+function extendAvaillableUserCommands(commandList) {
+  commandList.forEach((command) => {
+    AVAILABLE_USER_COMMANDS.push(command);
+  });
+}
+function commandProcessor(ctx) {
+  const { message, user, room = null, kv = null } = ctx;
+  const userCap = getUserCapabilities(user);
+  function loopOnAvailableCommands(availableCommands, origBody2) {
+    const elements = origBody2.split(" ");
+    const commandName = elements[1];
+    const subCommand = elements[2];
+    let cmdFound = false;
+    availableCommands.forEach((c) => {
+      if (c.name === commandName && (c.capabilities & userCap) === c.capabilities) {
+        if (c.subCommand === void 0 || c.subCommand === subCommand) {
+          let args = [];
+          const cliInfo = {
+            commandName,
+            subCommand: null
+          };
+          if (c.subCommand === void 0) {
+            args = elements.slice(2);
+          } else {
+            args = elements.slice(3);
+            cliInfo.subCommand = c.subCommand;
+          }
+          cmdFound = true;
+          c.func(ctx, args, cliInfo);
+        }
+      }
+    });
+    if (!cmdFound) {
+      printCommandResult(ctx, "Command not found !", NOTICE_COLOR_THEME.error);
+    }
+  }
+  const origBody = message.orig.trim();
+  if (origBody[0] === COMMAND_START_CHAR) {
+    createCommandsList();
+    if (origBody.startsWith(SETTINGS.cliBaseStaffCommand)) {
+      loopOnAvailableCommands(AVAILABLE_STAFF_COMMANDS2, origBody);
+    } else if (origBody.startsWith(SETTINGS.cliBaseUserCommand)) {
+      loopOnAvailableCommands(AVAILABLE_USER_COMMANDS, origBody);
+    }
+  }
+}
+
+// src/js/shared_code.mts
+function onTipReceived(ctx) {
+  const { message = null, user = null, room = null, kv = null, tip = null } = ctx;
+  UserTipInfo.updateUserTips(ctx);
+}
+function onMessage(ctx) {
+  const { message, user = null, room = null, kv = null } = ctx;
+  const origBody = message.orig.trim();
+  if (origBody[0] === COMMAND_START_CHAR) {
+    commandProcessor(ctx);
+  }
+  const chatFilter = ModuleChatFilter.getFromKV(ctx);
+  chatFilter.onMessage(ctx);
+  chatFilter.storeToKV(ctx);
+}
+function onMessageTransform(ctx) {
+  const { message, user = null, room = null, kv = null } = ctx;
+  const origBody = message.orig.trim();
+  if (origBody[0] === COMMAND_START_CHAR) {
+    if (origBody.startsWith(SETTINGS.cliBaseStaffCommand) && !SETTINGS.cliBroadcastStaffCmd) {
+      message.setSpam(true);
+    } else if (origBody.startsWith(SETTINGS.cliBaseUserCommand) && !SETTINGS.cliBroadcastUserCmd) {
+      message.setSpam(true);
+    }
+  } else {
+    const chatFilter = ModuleChatFilter.getFromKV(ctx);
+    chatFilter.onMessageTransform(ctx);
+    chatFilter.storeToKV(ctx);
+  }
+}
+function onAppStart(ctx) {
+  const { app, user = null, room = null, kv, tip = null } = ctx;
+  const sObj = kv.get(KV_KEYS.currentSession, null);
+  if (!sObj) {
+    sessionManageEnter(ctx);
+  }
+  const m = `\u26A1\uFE0F ${app.name} (v${app.version}) has started.`;
+  printToOwner(ctx, m, NOTICE_COLOR_THEME.staff);
+  const manager = CallbacksManager.initNewManager(ctx);
+  manager.createAllDefaults(ctx);
+  manager.storeToKV(ctx);
+  logIt("App started");
+}
+function onAppStop(ctx) {
+  const { app, user = null, room = null, kv = null, tip = null } = ctx;
+  const m = `\u26A1\uFE0F ${app.name} has stopped`;
+  printToOwner(ctx, m, NOTICE_COLOR_THEME.staff);
+  logIt("App stoped");
+}
+function onBroadcastStart(ctx) {
+  sessionManageEnter(ctx);
+  logIt("Broadcast started YOOOUUUUPPPIIIII");
+}
+function onBroadcastStop(ctx) {
+  sessionManageLeave(ctx);
+  logIt("Broadcast stoped,  gniininii");
+}
+function onUserEnter(ctx) {
+  const { message = null, user, room = null, kv = null, tip = null } = ctx;
+  if (user.isOwner || user.colorGroup === CB_USER_GROUPS.owner.userColor) {
+    sessionManageEnter(ctx);
+  }
+}
+function onUserLeave(ctx) {
+  const { message = null, user, room = null, kv = null, tip = null } = ctx;
+  if (user.isOwner || user.colorGroup === CB_USER_GROUPS.owner.userColor) {
+    sessionManageLeave(ctx);
+  }
+}
+function onCallback(ctx) {
+  const { callback = null, user = null, room = null, kv = null, tip = null } = ctx;
+  const manager = CallbacksManager.getFromKV(ctx);
+  manager.onEvent(ctx);
+}
+function bundlerHack() {
+  const CBentryPoints = [
     onAppStart,
     onAppStop,
     onBroadcastStart,
@@ -2211,7 +2276,7 @@ function pouet() {
     onUserLeave
   ];
 }
-pouet();
+bundlerHack();
 ModuleTimer.extendSettings();
 ModuleTimer.extendCallback();
 updateSettings();
