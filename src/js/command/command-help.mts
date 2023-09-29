@@ -18,8 +18,7 @@ export function init() {
 }
 
 function cliHelpShowHelp(ctx: CBcontext) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { user, room = null, kv = null } = ctx;
+    const { user, message} = ctx;
     const userCap = getUserCapabilities(user);
 
     function loopOnAvailableCommands(availableCommands: CommandInfoStore, baseCmd: string) {
@@ -36,10 +35,16 @@ function cliHelpShowHelp(ctx: CBcontext) {
         }); 
         return message;
     }
-
-    let message = 'Here the commands availlable to you:\n'
-    message = message + loopOnAvailableCommands(AVAILABLE_STAFF_COMMANDS, SETTINGS.cliBaseStaffCommand);
-    message = message + loopOnAvailableCommands(AVAILABLE_USER_COMMANDS, SETTINGS.cliBaseUserCommand);
-    printCommandResult(ctx, message, NOTICE_COLOR_THEME.help); 
+    
+    const origBody = message.orig.trim();
+    let resultMessage = 'Here the commands availlable to you:\n'
+    if (origBody.startsWith(SETTINGS.cliBaseStaffCommand)) {
+        resultMessage = resultMessage + loopOnAvailableCommands(AVAILABLE_STAFF_COMMANDS, SETTINGS.cliBaseStaffCommand);
+    } else if (origBody.startsWith(SETTINGS.cliBaseUserCommand)) {
+        resultMessage = resultMessage + loopOnAvailableCommands(AVAILABLE_USER_COMMANDS, SETTINGS.cliBaseUserCommand);
+    } else {
+        resultMessage = resultMessage + 'No luck, No commands for you';
+    }
+    printCommandResult(ctx, resultMessage, NOTICE_COLOR_THEME.help); 
 }
 

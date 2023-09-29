@@ -18,7 +18,8 @@ const AVAILABLE_STAFF_COMMANDS: CommandInfoStore = [
 ];
 
 const AVAILABLE_USER_COMMANDS = [
-    { name: 'debug', subCommand: 'test', capabilities: 0, func: testDebugCommand, help: 'some testing' },
+    { name: 'test', subCommand: 'testForEveryone', capabilities: 0, 
+    func: testSimpleCommand, help: 'Want to test an app command ?' },
 ];
 
 export function init() {
@@ -38,8 +39,8 @@ export function testRandomID(ctx: CBcontext) {
     printCommandResult(ctx,m, NOTICE_COLOR_THEME.staff);
 }
 
-function testDebugCommand(ctx: CBcontext) {
-    printCommandResult(ctx, 'Good you can run a command', NOTICE_COLOR_THEME.help);
+function testSimpleCommand(ctx: CBcontext) {
+    printCommandResult(ctx, 'Good you can run a command :-)', NOTICE_COLOR_THEME.help);
 }
 
 interface TestToto {

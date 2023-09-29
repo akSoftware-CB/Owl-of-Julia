@@ -1606,7 +1606,7 @@ function init2() {
   extendAvaillableUserCommands(LOCAL_AVAILABLE_USER_COMMANDS);
 }
 function cliHelpShowHelp(ctx) {
-  const { user, room = null, kv = null } = ctx;
+  const { user, message } = ctx;
   const userCap = getUserCapabilities(user);
   function loopOnAvailableCommands(availableCommands, baseCmd) {
     let message2 = "";
@@ -1623,10 +1623,16 @@ function cliHelpShowHelp(ctx) {
     });
     return message2;
   }
-  let message = "Here the commands availlable to you:\n";
-  message = message + loopOnAvailableCommands(AVAILABLE_STAFF_COMMANDS2, SETTINGS.cliBaseStaffCommand);
-  message = message + loopOnAvailableCommands(AVAILABLE_USER_COMMANDS, SETTINGS.cliBaseUserCommand);
-  printCommandResult(ctx, message, NOTICE_COLOR_THEME.help);
+  const origBody = message.orig.trim();
+  let resultMessage = "Here the commands availlable to you:\n";
+  if (origBody.startsWith(SETTINGS.cliBaseStaffCommand)) {
+    resultMessage = resultMessage + loopOnAvailableCommands(AVAILABLE_STAFF_COMMANDS2, SETTINGS.cliBaseStaffCommand);
+  } else if (origBody.startsWith(SETTINGS.cliBaseUserCommand)) {
+    resultMessage = resultMessage + loopOnAvailableCommands(AVAILABLE_USER_COMMANDS, SETTINGS.cliBaseUserCommand);
+  } else {
+    resultMessage = resultMessage + "No luck, No commands for you";
+  }
+  printCommandResult(ctx, resultMessage, NOTICE_COLOR_THEME.help);
 }
 
 // src/js/command/command-setting.mts
@@ -1886,7 +1892,13 @@ var AVAILABLE_STAFF_COMMANDS5 = [
   // func: testExtendClass, help: 'test JS extend classes' },
 ];
 var AVAILABLE_USER_COMMANDS2 = [
-  { name: "debug", subCommand: "test", capabilities: 0, func: testDebugCommand, help: "some testing" }
+  {
+    name: "test",
+    subCommand: "testForEveryone",
+    capabilities: 0,
+    func: testSimpleCommand,
+    help: "Want to test an app command ?"
+  }
 ];
 function init5() {
   extendAvaillableStaffCommands(AVAILABLE_STAFF_COMMANDS5);
@@ -1901,8 +1913,8 @@ function testRandomID(ctx) {
   m = getRandomID(8);
   printCommandResult(ctx, m, NOTICE_COLOR_THEME.staff);
 }
-function testDebugCommand(ctx) {
-  printCommandResult(ctx, "Good you can run a command", NOTICE_COLOR_THEME.help);
+function testSimpleCommand(ctx) {
+  printCommandResult(ctx, "Good you can run a command :-)", NOTICE_COLOR_THEME.help);
 }
 function testPerfKV(ctx) {
   const { message, user = null, room = null, kv } = ctx;
