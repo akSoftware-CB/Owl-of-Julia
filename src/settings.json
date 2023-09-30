@@ -83,6 +83,30 @@
     "description": "Notice sent to user using very bad words",
     "default": "Be Polite, Please ! No bad words !"
   },
+  "cowsayColor": {
+    "type": "string",
+    "title": "COWSAY Color",
+    "description": "Text Color",
+    "default": "black"
+  },
+  "cowsayBgColor": {
+    "type": "string",
+    "title": "COWSAY Background color",
+    "description": "Background color (hex, CSS name or linear-gradient)",
+    "default": "linear-gradient(to right, rgba(128, 0, 128, 0.2) 20%, rgba(128, 0, 128, 0.4) 73%, rgba(128, 0, 128, 0.2))"
+  },
+  "cowsayCowName": {
+    "type": "string",
+    "title": "COWSAY Cow name",
+    "description": "Choose your animal",
+    "enum": [
+      "default",
+      "cock",
+      "moose",
+      "daemon"
+    ],
+    "default": "default"
+  },
   "sessionMinTimeBetweenSession": {
     "type": "number",
     "title": "SESSION min time between different sessions (minutes)",

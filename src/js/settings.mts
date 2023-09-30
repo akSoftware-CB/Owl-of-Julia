@@ -53,6 +53,9 @@ interface Settings{
     chatVeryBadWords:  string[],
     chatFuzzyScoreForVBW:  number,
     chatNoticeToUserVBW:  unknown,
+    cowsayCowName: string,
+    cowsayColor: string,
+    cowsayBgColor: string,
     [key: string]: unknown,
 }
 
@@ -135,8 +138,25 @@ const SETTINGS_INFO: SettingsInfoObj = {
         fromSettings:true,
         liveUpdate: false,
         desc: 'Notice to send to user using very bad words'},
-            
+    cowsayCowName: {
+        defaultValue: 'default', 
+        fromSettings:true,
+        liveUpdate: true,
+        desc: 'Choose your cow'},        
+    cowsayColor: {
+        defaultValue: 'black', 
+        fromSettings:true,
+        liveUpdate: false,
+        desc: 'Front Color'},
+    cowsayBgColor: {
+        defaultValue: 'linear-gradient(to right, rgba(128, 0, 128, 0.2) 20%, rgba(128, 0, 128, 0.4) 73%, rgba(128, 0, 128, 0.2))', 
+        fromSettings:true,
+        liveUpdate: false,
+        desc: 'Background Color'},
+
 };
+
+// cowsayCowName cowsayColor cowsayBgColor 
 
 function getSettings(): Settings {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment

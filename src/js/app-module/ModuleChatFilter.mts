@@ -233,11 +233,11 @@ class ModuleChatFilter extends ModuleBase {
         }
         
         if (!spam) {
-            const newMessage: string = '\n' + cowsay(messageText).replaceAll(' ','\u00A0');
+            const newMessage: string = '\n' + cowsay(messageText, {cow: SETTINGS.cowsayCowName}).replaceAll(' ','\u00A0');
             message.setBody(newMessage);
             message.setFont(CBFonts.Courier);
-            message.setColor('black');
-            message.setBgColor('linear-gradient(to right, rgba(128, 0, 128, 0.2) 20%, rgba(128, 0, 128, 0.4) 73%, rgba(128, 0, 128, 0.2))');
+            message.setColor(SETTINGS.cowsayColor);
+            message.setBgColor(SETTINGS.cowsayBgColor);
             message.setSpam(false);
         }
     }
