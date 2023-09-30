@@ -26,6 +26,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "cowsayjs": "^2.0.0",
     "node": "^20.6.0"
   }
 }

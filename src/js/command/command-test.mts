@@ -5,7 +5,7 @@ import { NOTICE_COLOR_THEME, printCommandResult } from "../cli/cli-print.mjs";
 import { logIt } from "../tool/log.mjs";
 import { CAPABILITY } from "../user-management.mjs";
 import { CommandInfoStore, extendAvaillableStaffCommands, extendAvaillableUserCommands } from "./command-processor.mjs";
-
+import { cowsay} from "cowsayjs";
 
 const AVAILABLE_STAFF_COMMANDS: CommandInfoStore = [
     { name: 'test', subCommand: 'perfkv', capabilities: CAPABILITY.debugChange, 
@@ -13,6 +13,9 @@ const AVAILABLE_STAFF_COMMANDS: CommandInfoStore = [
 
     { name: 'test', subCommand: 'getID', capabilities: CAPABILITY.debugChange, 
     func: testRandomID, help: 'testing ID generation' },
+    { name: 'test', subCommand: 'cowsay', capabilities: CAPABILITY.debugChange, 
+    func: testCowsay, help: 'testing cowsay' },
+
     // { name: 'test', subCommand: 'testExtend', capabilities: CAPABILITY.debugChange, 
     // func: testExtendClass, help: 'test JS extend classes' },
 ];
@@ -27,7 +30,18 @@ export function init() {
     extendAvaillableUserCommands(AVAILABLE_USER_COMMANDS);
 }
 
-export function testRandomID(ctx: CBcontext) {
+function testCowsay(ctx: CBcontext) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { message = null, user = null, room = null, kv = null } = ctx;
+
+    const output: string = cowsay('Hello from typescript!');
+
+    console.log(output)
+    printCommandResult(ctx, output.replaceAll(' ','\u00A0'), NOTICE_COLOR_THEME.staff);
+}
+
+
+function testRandomID(ctx: CBcontext) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { message = null, user = null, room = null, kv = null } = ctx;
 

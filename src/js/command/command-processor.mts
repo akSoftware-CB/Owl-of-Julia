@@ -9,6 +9,7 @@ import { init as initCmdSetting } from "./command-setting.mjs";
 import { init as initCmdStat } from "./command-stat.mjs";
 import { init as initCmdTest} from "./command-test.mjs";
 import { init as initCmdTimer } from "./command-timer.mjs";
+import { init as initCmdChat } from "./command-chat.mjs";
 
 
 function createCommandsList() {
@@ -17,6 +18,7 @@ function createCommandsList() {
     initCmdSetting();
     initCmdStat();
     initCmdTimer();
+    initCmdChat();
     initCmdHelp();    
 }
 
@@ -30,6 +32,7 @@ interface CommandInfo {
     subCommand?:     string,
     capabilities:   CAPABILITY, 
     func:           CliCommandFunction,
+    transform?:      boolean | undefined,
     help:           string,
 }
 
@@ -57,15 +60,20 @@ function extendAvaillableUserCommands(commandList: CommandInfoStore) {
 }
 
 
-function commandProcessor(ctx: CBcontext) {
+function commandProcessor(ctx: CBcontext, transform: boolean = false) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { message, user, room = null, kv = null } = ctx;
     const userCap = getUserCapabilities(user);
 
-    function loopOnAvailableCommands(availableCommands: CommandInfoStore, origBody: string) {
+    function loopOnAvailableCommands(availableCommands: CommandInfoStore, origBody: string){
         const elements = origBody.split(' ');
         const commandName = elements[1];
         const subCommand = elements[2];
+        const result = {
+            newMessageObj: {},
+            transform: false,
+            cmdFound: false,
+        };
 
         let cmdFound = false;
         availableCommands.forEach(c => {
@@ -83,13 +91,21 @@ function commandProcessor(ctx: CBcontext) {
                         cliInfo.subCommand = c.subCommand;
                     }
                     cmdFound = true ;
-                    c.func(ctx, args, cliInfo);    
+                    if (((c.transform === undefined) && (transform === false)) || (c.transform === transform)) {                        
+                        result.newMessageObj = c.func(ctx, args, cliInfo) as string;    
+                        result.cmdFound = true;
+                        if (transform) {
+                            result.transform = true;
+                        }
+                        return result;
+                    }
                 }
             }
         });
         
         if (!cmdFound) {
             printCommandResult(ctx, 'Command not found !', NOTICE_COLOR_THEME.error);
+            return result
         }
     }
 
@@ -97,12 +113,12 @@ function commandProcessor(ctx: CBcontext) {
     if (origBody[0] === COMMAND_START_CHAR) {
         createCommandsList();
         if (origBody.startsWith(SETTINGS.cliBaseStaffCommand)) {
-            loopOnAvailableCommands(AVAILABLE_STAFF_COMMANDS, origBody);
+            return loopOnAvailableCommands(AVAILABLE_STAFF_COMMANDS, origBody);
 
         } else if (origBody.startsWith(SETTINGS.cliBaseUserCommand)) {
-            loopOnAvailableCommands(AVAILABLE_USER_COMMANDS, origBody);
+            return loopOnAvailableCommands(AVAILABLE_USER_COMMANDS, origBody);
 
-        }    
+        } 
     }
 }
 

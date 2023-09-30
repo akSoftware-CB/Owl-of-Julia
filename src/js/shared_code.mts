@@ -6,12 +6,12 @@ import { COMMAND_START_CHAR } from "./defaults.mjs";
 import { KV_KEYS } from "./tool/kv.mjs";
 import { CB_USER_GROUPS, CBcontext } from "./cb/cb-api.mjs";
 import { CallbacksManager } from "./app-module/CallbacksManager.mjs";
-import { ModuleChatFilter } from "./app-module/ModuleChatFilter.mjs";
 import { ModuleTimer } from "./app-module/ModuleTimer.mjs";
 import { UserTipInfo } from "./app-module/UserTipInfo.mjs";
 import { commandProcessor } from "./command/command-processor.mjs";
 import { sessionManageEnter, sessionManageLeave } from "./session-management.mjs";
 import { logIt } from "./tool/log.mjs";
+import { ModuleChatFilter } from "./app-module/ModuleChatFilter.mjs";
 
 
 function onTipReceived(ctx: CBcontext) {
@@ -45,6 +45,7 @@ function onMessageTransform(ctx: CBcontext) {
         } else if (origBody.startsWith(SETTINGS.cliBaseUserCommand) && !SETTINGS.cliBroadcastUserCmd) {
             message.setSpam(true);
         }
+        commandProcessor(ctx, true);
     } else {
         const chatFilter: ModuleChatFilter = ModuleChatFilter.getFromKV(ctx) as ModuleChatFilter;
         chatFilter.onMessageTransform(ctx);

@@ -44,7 +44,9 @@ function printCommandResult(ctx: CBcontext, message: string, theme = NOTICE_COLO
         toUsername: user.username,
     };
 
-    room.sendNotice(message, p);
+    if (typeof room != 'undefined') {
+        room.sendNotice(message, p);
+    }
 }
 
 function printToOwner(ctx: CBcontext, message: string, theme = NOTICE_COLOR_THEME.staff) {
@@ -56,7 +58,9 @@ function printToOwner(ctx: CBcontext, message: string, theme = NOTICE_COLOR_THEM
         toUsername: room.owner,
     };
 
-    room.sendNotice(message, p);
+    if (typeof room != 'undefined') {
+        room.sendNotice(message, p);
+    }
 }
 
 function printToUser(ctx: CBcontext, message: string, username: string, theme = NOTICE_COLOR_THEME.userError) {
@@ -68,7 +72,9 @@ function printToUser(ctx: CBcontext, message: string, username: string, theme = 
         toUsername: username,
     };
 
-    room.sendNotice(message, p);
+    if (typeof room != 'undefined') {
+        room.sendNotice(message, p);
+    }
 }
 
 function printToGroup(ctx: CBcontext, message: string, group = CB_USER_GROUPS.fanclub, theme = NOTICE_COLOR_THEME.user) {
@@ -80,7 +86,9 @@ function printToGroup(ctx: CBcontext, message: string, group = CB_USER_GROUPS.fa
         toColorGroup: group.noticeColor,
     };
 
-    room.sendNotice(message, p);
+    if (typeof room != 'undefined') {
+        room.sendNotice(message, p);
+    }
 }
 
 function printToEveryone(ctx: CBcontext, message: string, theme = NOTICE_COLOR_THEME.user) {
@@ -90,8 +98,10 @@ function printToEveryone(ctx: CBcontext, message: string, theme = NOTICE_COLOR_T
     const p = {
         ...theme,
     };
-
-    room.sendNotice(message, p);
+    
+    if (typeof room != 'undefined') {
+        room.sendNotice(message, p);
+    }
 }
 
 export {NOTICE_COLOR_THEME, printToUser, printCommandResult, printToOwner, 

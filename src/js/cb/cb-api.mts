@@ -47,6 +47,9 @@ interface CBObjKV {
 interface CBObjMessage {
     setSpam: cbFunction,
     setBody: cbFunction,
+    setBgColor: cbFunction,
+    setColor: cbFunction,
+    setFont: cbFunction,
     orig: string,
 }
 
@@ -71,6 +74,19 @@ interface CBObj {
 
 type cbFunction = (..._args: unknown[]) => unknown;
 
+
+enum CBFonts {
+    Default = 'Default', 
+    Arial = 'Arial',
+    Bookman = 'Bookman Old Style',
+    Comic = 'Comic Sans',
+    Courier = 'Courier',
+    Lucida = 'Lucida',
+    Palantino = 'Palantino',
+    Tahoma = 'Tahoma',
+    Times = 'Times New Roman',
+}
+
 // interface Example {
 //     func(...args: any[]): void;
 // }
@@ -88,4 +104,4 @@ type cbFunction = (..._args: unknown[]) => unknown;
 //     get: cbFunction,
 // }
 
-export {CBcontext, CB_USER_GROUPS, CBObjUser};
+export {CBFonts, CBcontext, CB_USER_GROUPS, CBObjUser};

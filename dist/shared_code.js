@@ -1,3 +1,2501 @@
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+
+// node_modules/cowsayjs/lib/box.js
+var require_box = __commonJS({
+  "node_modules/cowsayjs/lib/box.js"(exports, module) {
+    "use strict";
+    var limits = {
+      say: [
+        "< ",
+        " >",
+        "/ ",
+        " \\",
+        "\\ ",
+        " /",
+        "| ",
+        " |"
+      ],
+      think: [
+        "( ",
+        " )",
+        "( ",
+        " )",
+        "( ",
+        " )",
+        "( ",
+        " )"
+      ]
+    };
+    function split(message, wrap) {
+      if (typeof wrap !== "number" || isNaN(wrap)) {
+        return message.split(/\r\n|[\n\r\f\v\u2028\u2029\u0085]/g).map(function(line) {
+          var tab = line.indexOf("	");
+          if (tab === -1) {
+            return line;
+          }
+          var tabbed = line;
+          do {
+            var spaces = Array(9 - tab % 8).join(" ");
+            tabbed = tabbed.slice(0, tab) + spaces + tabbed.slice(tab + 1);
+            tab = tabbed.indexOf("	", tab + spaces.length);
+          } while (tab !== -1);
+          return tabbed;
+        });
+      }
+      var lines = message.replace(/(?:\r\n|[\n\r\f\v\u2028\u2029\u0085])(\S)/g, " $1").replace(/(?:\r\n|[\n\r\f\v\u2028\u2029\u0085])\s+/g, "\n\n").replace(/(?:\r\n|[\t\n\r\f\v\u2028\u2029\u0085])$/g, " ").split(/\r\n|[\n\r\f\v\u2028\u2029\u0085]/g);
+      lines = lines.map(function(line, i) {
+        if (/^\s*$/.test(line)) {
+          return "";
+        }
+        var fixed = line.replace(/\s+/g, " ");
+        return i > 0 ? fixed.replace(/^\s+/, "") : fixed;
+      }).filter(function(line, i, lines2) {
+        if (line.length > 0 || i <= 1) {
+          return true;
+        }
+        return lines2[i - 1].length > 0;
+      });
+      if (lines.every(function(line) {
+        return line.length === 0;
+      })) {
+        return [""];
+      }
+      if (lines[lines.length - 1].length === 0) {
+        lines.pop();
+      }
+      var initial = [];
+      var max = wrap;
+      var col = wrap - 1;
+      return lines.reduce(function(acc, line, i, src) {
+        if (line.length === 0) {
+          return acc.concat(line);
+        }
+        if (max < 2) {
+          if (src[i + 1] !== "") {
+            src.splice(0);
+          }
+          max = 2;
+          col = 1;
+          return acc.concat("0");
+        }
+        var last = i > 0 ? acc[acc.length - 1] + line : line;
+        var space = last.length < max ? last.length : last.lastIndexOf(" ", col);
+        var br = space > 0 && space < col ? space : last.length === max && last[last.length - 1] === " " ? max : col;
+        var words = acc.concat(last.slice(0, br));
+        var rest = line.slice(br).replace(/^\s+/, "");
+        while (rest.length > 0) {
+          space = rest.length < max ? rest.length : rest.lastIndexOf(" ", col);
+          br = space > 0 && space < col ? space : rest.length === max && rest[rest.length - 1] === " " ? max : col;
+          words.push(rest.slice(0, br));
+          rest = rest.slice(br).replace(/^\s+/, "");
+        }
+        return words;
+      }, initial);
+    }
+    function pad(str, len) {
+      if (str.length >= len) {
+        return str;
+      }
+      var pad2 = Array(len - str.length + 1).join(" ");
+      return str + pad2;
+    }
+    function perform(action, message, wrap) {
+      var type = action === "think" ? "think" : "say";
+      var text = typeof message === "string" ? message : "";
+      var col;
+      switch (typeof wrap) {
+        case "number":
+          col = wrap;
+          break;
+        case "string":
+          col = parseInt(wrap);
+          break;
+        default:
+          switch (wrap) {
+            case void 0:
+            case true:
+              col = 40;
+              break;
+            default:
+              col = void 0;
+          }
+      }
+      var limit = limits[type];
+      var lines = split(text, col);
+      var width = lines.map(function(line) {
+        return line.length;
+      }).reduce(function(prev, curr) {
+        return curr > prev ? curr : prev;
+      }, 0);
+      var spanner = Array(width + 3);
+      var box = [" " + spanner.join("_")];
+      if (lines.length === 1) {
+        box.push(limit[0] + pad(lines[0], width) + limit[1]);
+      } else {
+        var last = lines.length - 1;
+        var i = 0;
+        do {
+          switch (i) {
+            case 0:
+              box.push(limit[2] + pad(lines[i], width) + limit[3]);
+              break;
+            case last:
+              box.push(limit[4] + pad(lines[i], width) + limit[5]);
+              break;
+            default:
+              box.push(limit[6] + pad(lines[i], width) + limit[7]);
+          }
+        } while (++i <= last);
+      }
+      box.push(" " + spanner.join("-"), "");
+      return box.join("\n");
+    }
+    function say(message, wrap) {
+      return perform("say", message, wrap);
+    }
+    function think(message, wrap) {
+      return perform("think", message, wrap);
+    }
+    module.exports = {
+      perform,
+      say,
+      think
+    };
+  }
+});
+
+// node_modules/cowsayjs/lib/utils.js
+var require_utils = __commonJS({
+  "node_modules/cowsayjs/lib/utils.js"(exports, module) {
+    "use strict";
+    function find(arr, predicate) {
+      for (var i = 0; i < arr.length; ++i) {
+        var elem = arr[i];
+        if (predicate(elem, i, arr)) {
+          return elem;
+        }
+      }
+      return void 0;
+    }
+    module.exports = {
+      find
+    };
+  }
+});
+
+// node_modules/cowsayjs/lib/mode.js
+var require_mode = __commonJS({
+  "node_modules/cowsayjs/lib/mode.js"(exports, module) {
+    "use strict";
+    var utils = require_utils();
+    var modes = [
+      { id: "u", name: "default" },
+      { id: "b", name: "borg", eyes: "==" },
+      { id: "d", name: "dead", eyes: "xx", tongue: "U " },
+      { id: "g", name: "greedy", eyes: "$$" },
+      { id: "p", name: "paranoia", eyes: "@@" },
+      { id: "s", name: "stoned", eyes: "**", tongue: "U " },
+      { id: "t", name: "tired", eyes: "--" },
+      { id: "w", name: "wired", eyes: "OO" },
+      { id: "y", name: "youthful", eyes: ".." }
+    ];
+    var customModes = [];
+    function copyModeData(modeData) {
+      return {
+        id: modeData.id,
+        name: modeData.name,
+        eyes: modeData.eyes,
+        tongue: modeData.tongue
+      };
+    }
+    function faceMode(face) {
+      var mode;
+      if (typeof face === "object" && face !== null) {
+        mode = utils.find(modes.concat(customModes), function(mode2) {
+          return mode2.eyes === face.eyes && mode2.tongue === face.tongue;
+        });
+      }
+      if (mode === void 0) {
+        mode = modes[0];
+      }
+      return {
+        id: mode.id,
+        name: mode.name
+      };
+    }
+    function modeFace(id) {
+      var face;
+      if (typeof id === "string") {
+        face = utils.find(modes.concat(customModes), function(mode) {
+          return mode.id === id || mode.name === id;
+        });
+      }
+      if (face === void 0) {
+        face = modes[0];
+      }
+      return {
+        eyes: face.eyes,
+        tongue: face.tongue
+      };
+    }
+    function addMode(modeData) {
+      var valid = true;
+      valid = valid && typeof modeData === "object" && modeData !== null && !Array.isArray(modeData);
+      valid = valid && typeof modeData.id === "string" && modeData.id.length === 1;
+      valid = valid && typeof modeData.name === "string" && modeData.id === modeData.name[0];
+      valid = valid && (typeof modeData.eyes === "undefined" || typeof modeData.eyes === "string");
+      valid = valid && (typeof modeData.tongue === "undefined" || typeof modeData.tongue === "string");
+      if (!valid) {
+        return false;
+      }
+      var ind = modes.concat(customModes).findIndex(function(mode) {
+        return mode.id === modeData.id;
+      });
+      if (ind !== -1) {
+        return false;
+      }
+      var options = ["h", "e", "f", "l", "n", "r", "T", "W"];
+      if (options.includes(modeData.id)) {
+        return false;
+      }
+      customModes.push(copyModeData(modeData));
+      customModes.sort(function(a, b) {
+        return a.id.localeCompare(b.id);
+      });
+      return true;
+    }
+    function removeMode(id) {
+      if (typeof id !== "string") {
+        return void 0;
+      }
+      var ind = customModes.findIndex(function(face) {
+        return face.id === id || face.name === id;
+      });
+      if (ind !== -1) {
+        return customModes.splice(ind, 1)[0];
+      }
+      return void 0;
+    }
+    module.exports = {
+      modes: modes.map(copyModeData),
+      customModes,
+      faceMode,
+      modeFace,
+      addMode,
+      removeMode
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/default.cow.js
+var require_default_cow = __commonJS({
+  "node_modules/cowsayjs/cows/default.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "default",
+      template: [
+        "        \\   ^__^",
+        "         \\  (oo)\\_______",
+        "            (__)\\       )\\/\\",
+        "                ||----w |",
+        "                ||     ||"
+      ],
+      actionPos: [
+        [0, 8],
+        [1, 9]
+      ],
+      eyesPos: [
+        [1, 13],
+        [1, 14]
+      ],
+      tonguePos: [
+        [3, 13],
+        [3, 14]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/apt.cow.js
+var require_apt_cow = __commonJS({
+  "node_modules/cowsayjs/cows/apt.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "apt",
+      template: [
+        "       \\ (__)",
+        "         (oo)",
+        "   /------\\/",
+        "  / |    ||",
+        " *  /\\---/\\",
+        "    ~~   ~~"
+      ],
+      actionPos: [
+        [0, 7]
+      ],
+      eyesPos: [
+        [1, 10],
+        [1, 11]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/beavis.zen.cow.js
+var require_beavis_zen_cow = __commonJS({
+  "node_modules/cowsayjs/cows/beavis.zen.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "beavis.zen",
+      template: [
+        "   \\        __------~~-,",
+        "    \\     ,'            ,",
+        "          /               \\",
+        "         /                :",
+        "        |                  '",
+        "        |                  |",
+        "        |                  |",
+        "         |   _--           |",
+        "         _| =-.     .-.   ||",
+        "         o|/o/       _.   |",
+        "         /  ~          \\ |",
+        "       (____@)  ___~    |",
+        "          |_===~~~.`    |",
+        "       _______.--~     |",
+        "       \\________       |",
+        "                \\      |",
+        "              __/-___-- -__",
+        "             /            _ \\"
+      ],
+      actionPos: [
+        [0, 3],
+        [1, 4]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/blowfish.cow.js
+var require_blowfish_cow = __commonJS({
+  "node_modules/cowsayjs/cows/blowfish.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "blowfish",
+      template: [
+        "   \\",
+        "    \\",
+        "               |    .",
+        "           .   |L  /|",
+        "       _ . |\\ _| \\--+._/| .",
+        "      / ||\\| Y J  )   / |/| ./",
+        "     J  |)'( |        ` F`.'/",
+        "   -<|  F         __     .-<",
+        "     | /       .-'. `.  /-. L___",
+        "     J \\      <    \\  | | O\\|.-'",
+        "   _J \\  .-    \\/ O | | \\  |F",
+        "  '-F  -<_.     \\   .-'  `-' L__",
+        " __J  _   _.     >-'  )._.   |-'",
+        " `-|.'   /_.           \\_|   F",
+        "   /.-   .                _.<",
+        "  /'    /.'             .'  `\\",
+        "   /L  /'   |/      _.-'-\\",
+        "  /'J       ___.---'\\|",
+        "    |\\  .--' V  | `. `",
+        "    |/`. `-.     `._)",
+        "       / .-.\\",
+        " VK    \\ (  `\\",
+        "        `.\\",
+        ""
+      ],
+      actionPos: [
+        [0, 3],
+        [1, 4]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/bong.cow.js
+var require_bong_cow = __commonJS({
+  "node_modules/cowsayjs/cows/bong.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "bong",
+      template: [
+        "         \\",
+        "          \\",
+        "            ^__^ ",
+        "    _______/(oo)",
+        "/\\/(       /(__)",
+        "   | W----|| |~|",
+        "   ||     || |~|  ~~",
+        "             |~|  ~",
+        "             |_| o",
+        "             |#|/",
+        "            _+#+_"
+      ],
+      actionPos: [
+        [0, 9],
+        [1, 10]
+      ],
+      eyesPos: [
+        [3, 13],
+        [3, 14]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/bud-frogs.cow.js
+var require_bud_frogs_cow = __commonJS({
+  "node_modules/cowsayjs/cows/bud-frogs.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "bud-frogs",
+      template: [
+        "     \\",
+        "      \\",
+        "          oO)-.                       .-(Oo",
+        "         /__  _\\                     /_  __\\",
+        "         \\  \\(  |     ()~()         |  )/  /",
+        "          \\__|\\ |    (-___-)        | /|__/",
+        "          '  '--'    ==`-'==        '--'  '"
+      ],
+      actionPos: [
+        [0, 5],
+        [1, 6]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/bunny.cow.js
+var require_bunny_cow = __commonJS({
+  "node_modules/cowsayjs/cows/bunny.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "bunny",
+      template: [
+        "  \\",
+        "   \\   \\",
+        "        \\ /\\",
+        "        ( )",
+        "      .( o )."
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/calvin.cow.js
+var require_calvin_cow = __commonJS({
+  "node_modules/cowsayjs/cows/calvin.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "calvin",
+      template: [
+        " \\                   .,",
+        "   \\         .      .TR   d'",
+        "     \\      k,l    .R.b  .t .Je",
+        "       \\   .P q.   a|.b .f .Z%",
+        "           .b .h  .E` # J: 2`     .",
+        "      .,.a .E  ,L.M'  ?:b `| ..J9!`.,",
+        '       q,.h.M`   `..,   ..,""` ..2"`',
+        "       .M, J8`   `:       `   3;",
+        '   .    Jk              ...,   `^7"90c.',
+        "    j,  ,!     .7\"'`j,.|   .n.   ...",
+        "   j, 7'     .r`     4:      L   `...",
+        "  ..,m.      J`    ..,|..    J`  7TWi",
+        "  ..JJ,.:    %    oo      ,. ....,",
+        "    .,E      3     7`g.M:    P  41",
+        '   JT7"\'      O.   .J,;     ``  V"7N.',
+        '   G.           ""Q+  .Zu.,!`      Z`',
+        "   .9.. .         J&..J!       .  ,:",
+        '      7"9a                    JM"!',
+        "         .5J.     ..        ..F`",
+        "            78a..   `    ..2'",
+        `                J9Ksaw0"'`,
+        "               .EJ?A...a.",
+        "               q...g...gi",
+        "              .m...qa..,y:",
+        "              .HQFNB&...mm",
+        "               ,Z|,m.a.,dp",
+        '            .,?f` ,E?:"^7b',
+        "            `A| . .F^^7'^4,",
+        "             1.MMMMMMMMMMMQzna,",
+        '         ...f"A.JdT     J:    Jp,',
+        "          `JNa..........A....af`",
+        "               `^^^^^'`"
+      ],
+      actionPos: [
+        [0, 1],
+        [1, 3],
+        [2, 5],
+        [3, 7]
+      ],
+      eyesPos: [
+        [12, 18],
+        [12, 19]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/cheese.cow.js
+var require_cheese_cow = __commonJS({
+  "node_modules/cowsayjs/cows/cheese.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "cheese",
+      template: [
+        "   \\",
+        "    \\",
+        "      _____   _________",
+        "     /     \\_/         |",
+        "    |                 ||",
+        "    |                 ||",
+        "   |    ###\\  /###   | |",
+        "   |     0  \\/  0    | |",
+        "  /|                 | |",
+        " / |        <        |\\ \\",
+        "| /|                 | | |",
+        "| |     \\_______/   |  | |",
+        "| |                 | / /",
+        "/||                 /|||",
+        "   ----------------|",
+        "        | |    | |",
+        "        ***    ***",
+        "       /___\\  /___\\"
+      ],
+      actionPos: [
+        [0, 3],
+        [1, 4]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/cock.cow.js
+var require_cock_cow = __commonJS({
+  "node_modules/cowsayjs/cows/cock.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "cock",
+      template: [
+        "    \\",
+        "     \\  /\\/\\",
+        "       \\   /",
+        "       |  0 >>",
+        "       |___|",
+        " __((_<|   |",
+        "(          |",
+        "(__________)",
+        "   |      |",
+        "   |      |",
+        "   /\\     /\\"
+      ],
+      actionPos: [
+        [0, 4],
+        [1, 5]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/cower.cow.js
+var require_cower_cow = __commonJS({
+  "node_modules/cowsayjs/cows/cower.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "cower",
+      template: [
+        "     \\",
+        "      \\",
+        "        ,__, |    | ",
+        "        (oo)\\|    |___",
+        "        (__)\\|    |   )\\_",
+        "             |    |_w |  \\",
+        "             |    |  ||   *\n",
+        "             Cower...."
+      ],
+      actionPos: [
+        [0, 5],
+        [1, 6]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/daemon.cow.js
+var require_daemon_cow = __commonJS({
+  "node_modules/cowsayjs/cows/daemon.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "daemon",
+      template: [
+        "   \\         ,        ,",
+        "    \\       /(        )`",
+        "     \\      \\ \\___   / |",
+        "            /- _  `-/  '",
+        "           (/\\/ \\ \\   /\\",
+        "           / /   | `    \\",
+        "           O O   ) /    |",
+        "           `-^--'`<     '",
+        "          (_.)  _  )   /",
+        "           `.___/`    /",
+        "             `-----' /",
+        "<----.     __ / __   \\",
+        "<----|====O)))==) \\) /====",
+        "<----'    `--' `.__,' \\",
+        "             |        |",
+        "              \\       /",
+        "        ______( (_  / \\______",
+        "      ,'  ,-----'   |        \\",
+        "      `--{__________)        \\/"
+      ],
+      actionPos: [
+        [0, 3],
+        [1, 4],
+        [2, 5]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/dragon-and-cow.cow.js
+var require_dragon_and_cow_cow = __commonJS({
+  "node_modules/cowsayjs/cows/dragon-and-cow.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "dragon-and-cow",
+      template: [
+        "                       \\                    ^    /^",
+        "                        \\                  / \\  // \\",
+        "                         \\   |\\___/|      /   \\//  .\\",
+        "                          \\  /O  O  \\__  /    //  | \\ \\           *----*",
+        "                            /     /  \\/_/    //   |  \\  \\          \\   |",
+        "                            @___@`    \\/_   //    |   \\   \\         \\/\\ \\",
+        "                           0/0/|       \\/_ //     |    \\    \\         \\  \\",
+        "                       0/0/0/0/|        \\///      |     \\     \\       |  |",
+        "                    0/0/0/0/0/_|_ /   (  //       |      \\     _\\     |  /",
+        "                 0/0/0/0/0/0/`/,_ _ _/  ) ; -.    |    _ _\\.-~       /   /",
+        "                             ,-}        _      *-.|.-~-.           .~    ~",
+        "            \\     \\__/        `/\\      /                 ~-. _ .-~      /",
+        "             \\____(oo)           *.   }            {                   /",
+        "             (    (--)          .----~-.\\        \\-`                 .~",
+        "             //__\\\\  \\__ Ack!   ///.----..<        \\             _ -~",
+        "            //    \\\\               ///-._ _ _ _ _ _ _{^ - - - - ~"
+      ],
+      actionPos: [
+        [0, 23],
+        [1, 24],
+        [2, 25],
+        [3, 26]
+      ],
+      eyesPos: [
+        [12, 19],
+        [12, 20]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/dragon.cow.js
+var require_dragon_cow = __commonJS({
+  "node_modules/cowsayjs/cows/dragon.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "dragon",
+      template: [
+        "      \\                    / \\  //\\",
+        "       \\    |\\___/|      /   \\//  \\\\",
+        "            /0  0  \\__  /    //  | \\ \\    ",
+        "           /     /  \\/_/    //   |  \\  \\  ",
+        "           @_^_@'/   \\/_   //    |   \\   \\ ",
+        "           //_^_/     \\/_ //     |    \\    \\",
+        "        ( //) |        \\///      |     \\     \\",
+        "      ( / /) _|_ /   )  //       |      \\     _\\",
+        "    ( // /) '/,_ _ _/  ( ; -.    |    _ _\\.-~        .-~~~^-.",
+        "  (( / / )) ,-{        _      `-.|.-~-.           .~         `.",
+        " (( // / ))  '/\\      /                 ~-. _ .-~      .-~^-.  \\",
+        " (( /// ))      `.   {            }                   /      \\  \\",
+        "  (( / ))     .----~-.\\        \\-'                 .~         \\  `. \\^-.",
+        "             ///.----..>        \\             _ -~             `.  ^-`  ^-_",
+        "               ///-._ _ _ _ _ _ _}^ - - - - ~                     ~-- ,.-~",
+        "                                                                  /.-~"
+      ],
+      actionPos: [
+        [0, 6],
+        [1, 7]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/duck.cow.js
+var require_duck_cow = __commonJS({
+  "node_modules/cowsayjs/cows/duck.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "duck",
+      template: [
+        " \\",
+        "  \\",
+        "   \\ >()_",
+        "      (__)__ _"
+      ],
+      actionPos: [
+        [0, 1],
+        [1, 2],
+        [2, 3]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/elephant-in-snake.cow.js
+var require_elephant_in_snake_cow = __commonJS({
+  "node_modules/cowsayjs/cows/elephant-in-snake.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "elephant-in-snake",
+      template: [
+        "       \\",
+        "        \\  ....",
+        "          .    ........",
+        "          .            .",
+        "          .             .",
+        "    .......              .........",
+        "    ..............................",
+        "Elephant inside ASCII snake"
+      ],
+      actionPos: [
+        [0, 7],
+        [1, 8]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/elephant.cow.js
+var require_elephant_cow = __commonJS({
+  "node_modules/cowsayjs/cows/elephant.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "elephant",
+      template: [
+        " \\     /\\  ___  /\\",
+        "  \\   // \\/   \\/ \\\\",
+        "     ((    O O    ))",
+        "      \\\\ /     \\ //",
+        "       \\/  | |  \\/ ",
+        "        |  | |  |",
+        "        |  | |  |",
+        "        |   o   |",
+        "        | |   | |",
+        "        |m|   |m|"
+      ],
+      actionPos: [
+        [0, 1],
+        [1, 2]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/eyes.cow.js
+var require_eyes_cow = __commonJS({
+  "node_modules/cowsayjs/cows/eyes.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "eyes",
+      template: [
+        "    \\",
+        "     \\",
+        "                                   .::!!!!!!!:.",
+        "  .!!!!!:.                        .:!!!!!!!!!!!!",
+        "  ~~~~!!!!!!.                 .:!!!!!!!!!UWWW$$$",
+        "      :$$NWX!!:           .:!!!!!!XUWW$$$$$$$$$P",
+        '      $$$$$##WX!:      .<!!!!UW$$$$"  $$$$$$$$#',
+        "      $$$$$  $$$UX   :!!UW$$$$$$$$$   4$$$$$*",
+        '      ^$$$B  $$$$\\     $$$$$$$$$$$$   d$$R"',
+        `        "*$bd$$$$      '*$$$$$$$$$$$o+#"`,
+        '             """"          """""""'
+      ],
+      actionPos: [
+        [0, 4],
+        [1, 5]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/flaming-sheep.cow.js
+var require_flaming_sheep_cow = __commonJS({
+  "node_modules/cowsayjs/cows/flaming-sheep.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "flaming-sheep",
+      template: [
+        "  \\            .    .     .   ",
+        "   \\      .  . .     `  ,     ",
+        "    \\    .; .  : .' :  :  : . ",
+        "     \\   i..`: i` i.i.,i  i . ",
+        "      \\   `,--.|i |i|ii|ii|i: ",
+        "           UooU\\.'@@@@@@`.||' ",
+        "           \\__/(@@@@@@@@@@)'  ",
+        "                (@@@@@@@@)    ",
+        "                `YY~~~~YY'    ",
+        "                 ||    ||     "
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3],
+        [2, 4],
+        [3, 5],
+        [4, 6]
+      ],
+      eyesPos: [
+        [5, 12],
+        [5, 13]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/fox.cow.js
+var require_fox_cow = __commonJS({
+  "node_modules/cowsayjs/cows/fox.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "fox",
+      template: [
+        "         \\     ,-.      .-,",
+        "          \\    |-.\\ __ /.-|",
+        "           \\   \\  `    `  /",
+        "                /_     _ \\",
+        "              <  _`q  p _  >",
+        "              <.._=/  \\=_. >",
+        "                 {`\\()/`}`\\",
+        "                 {      }  \\",
+        "                 |{    }    \\",
+        "                 \\ '--'   .- \\",
+        "                 |-      /    \\",
+        "                 | | | | |     ;",
+        "                 | | |.;.,..__ |",
+        '               .-"";`         `|',
+        "              /    |           /",
+        "              `-../____,..---'`"
+      ],
+      actionPos: [
+        [0, 9],
+        [1, 10],
+        [2, 11]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/ghostbusters.cow.js
+var require_ghostbusters_cow = __commonJS({
+  "node_modules/cowsayjs/cows/ghostbusters.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "ghostbusters",
+      template: [
+        "          \\",
+        "           \\",
+        "            \\          __---__",
+        "                    _-       /--______",
+        "               __--( /     \\ )XXXXXXXXXXX\\v.",
+        "             .-XXX(   O   O  )XXXXXXXXXXXXXXX-",
+        "            /XXX(       U     )        XXXXXXX\\",
+        "          /XXXXX(              )--_  XXXXXXXXXXX\\",
+        "         /XXXXX/ (      O     )   XXXXXX   \\XXXXX\\",
+        "         XXXXX/   /            XXXXXX   \\__ \\XXXXX",
+        "         XXXXXX__/          XXXXXX         \\__---->",
+        " ---___  XXX__/          XXXXXX      \\__         /",
+        "   \\-  --__/   ___/\\  XXXXXX            /  ___--/=",
+        "    \\-\\    ___/    XXXXXX              '--- XXXXXX",
+        "       \\-\\/XXX\\ XXXXXX                      /XXXXX",
+        "         \\XXXXXXXXX   \\                    /XXXXX/",
+        "          \\XXXXXX      >                 _/XXXXX/",
+        "            \\XXXXX--__/              __-- XXXX/",
+        "             -XXXXXXXX---------------  XXXXXX-",
+        "                \\XXXXXXXXXXXXXXXXXXXXXXXXXX/",
+        '                  ""VXXXXXXXXXXXXXXXXXXV""'
+      ],
+      actionPos: [
+        [0, 10],
+        [1, 11],
+        [2, 12]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/gnu.cow.js
+var require_gnu_cow = __commonJS({
+  "node_modules/cowsayjs/cows/gnu.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "gnu",
+      template: [
+        "    \\               ,-----._",
+        "  .  \\         .  ,'        `-.__,------._",
+        " //   \\      __\\\\'                        `-.",
+        "((    _____-'___))                           |",
+        " `:='/     (alf_/                            |",
+        " `.=|      |='                               |",
+        "    |)   O |                                  \\",
+        "    |      |                               /\\  \\",
+        "    |     /                          .    /  \\  \\",
+        "    |    .-..__            ___   .--' \\  |\\   \\  |",
+        "   |o o  |     ``--.___.  /   `-'      \\  \\\\   \\ |",
+        "    `--''        '  .' / /             |  | |   | \\",
+        "                 |  | / /              |  | |   mmm",
+        "                 |  ||  |              | /| |",
+        "                 ( .' \\ \\              || | |",
+        "                 | |   \\ \\            // / /",
+        "                 | |    \\ \\          || |_|",
+        "                /  |    |_/         /_|",
+        "               /__/"
+      ],
+      actionPos: [
+        [0, 4],
+        [1, 5],
+        [2, 6]
+      ],
+      tonguePos: [
+        [12, 5],
+        [12, 6]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/head-in.cow.js
+var require_head_in_cow = __commonJS({
+  "node_modules/cowsayjs/cows/head-in.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "head-in",
+      template: [
+        "    \\",
+        "     \\",
+        "    ^__^         /",
+        "    (oo)\\_______/  _________",
+        "    (__)\\       )=(  ____|_ \\_____",
+        "        ||----w |  \\ \\     \\_____ |",
+        "        ||     ||   ||           ||"
+      ],
+      actionPos: [
+        [0, 4],
+        [1, 5]
+      ],
+      eyesPos: [
+        [3, 5],
+        [3, 6]
+      ],
+      tonguePos: [
+        [5, 5],
+        [5, 6]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/hellokitty.cow.js
+var require_hellokitty_cow = __commonJS({
+  "node_modules/cowsayjs/cows/hellokitty.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "hellokitty",
+      template: [
+        "  \\",
+        "   \\",
+        "      /\\_)o<",
+        "     |      \\",
+        "     | O . O|",
+        "      \\_____/"
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/kangaroo.cow.js
+var require_kangaroo_cow = __commonJS({
+  "node_modules/cowsayjs/cows/kangaroo.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "kangaroo",
+      template: [
+        "  \\       .",
+        "   \\      l\\ /\\",
+        "    \\     !)Y.))",
+        "         _\\| //",
+        "       ,/oo  \\",
+        "    .-+    _ /",
+        "   `-_--=-'/",
+        "         / /",
+        "        /  \\_",
+        "       Y  .  )",
+        ` .--v--^--' /"\\`,
+        ` \\/~\\/~T"--' _ \\`,
+        '       !  ./~ " \\',
+        "       `\\.Y      Y    _",
+        "       (~~|      |   |^Y",
+        "       `\\. \\     |   l |",
+        "         T~\\^. Y |   / |",
+        "         | |\\| | !  l  |",
+        "         ! | Y | `\\/'. |",
+        '   ______L_j l j   ~"  l',
+        ' _/,_/, __ ~"__ }____,/',
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3],
+        [2, 4]
+      ],
+      eyesPos: [
+        [4, 9],
+        [4, 10]
+      ],
+      tonguePos: [
+        [7, 5],
+        [7, 6]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/kiss.cow.js
+var require_kiss_cow = __commonJS({
+  "node_modules/cowsayjs/cows/kiss.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "kiss",
+      template: [
+        "     \\",
+        "      \\",
+        "             ,;;;;;;;,",
+        "            ;;;;;;;;;;;,",
+        "           ;;;;;'_____;'",
+        "           ;;;(/))))|((\\",
+        "           _;;((((((|))))",
+        "          / |_\\\\\\\\\\\\\\\\\\\\\\\\",
+        "     .--~(  \\ ~))))))))))))",
+        "    /     \\  `\\-(((((((((((\\\\",
+        "    |    | `\\   ) |\\       /|)",
+        "     |    |  `. _/  \\_____/ |",
+        "      |    , `\\~            /",
+        "       |    \\  \\           /",
+        "      | `.   `\\|          /",
+        "      |   ~-   `\\        /",
+        "       \\____~._/~ -_,   (\\",
+        "        |-----|\\   \\    ';;",
+        "       |      | :;;;'     \\",
+        "      |  /    |            |",
+        "      |       |            |"
+      ],
+      actionPos: [
+        [0, 5],
+        [1, 6]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/kitty.cow.js
+var require_kitty_cow = __commonJS({
+  "node_modules/cowsayjs/cows/kitty.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "kitty",
+      template: [
+        "     \\",
+        "      \\",
+        `       ("\`-'  '-/") .___..--' ' "\`-._`,
+        "         ` *_ *  )    `-.   (      ) .`-.__. `)",
+        "         (_Y_.) ' ._   )   `._` ;  `` -. .-'",
+        "      _.. `--'_..-_/   /--' _ .' ,4",
+        "   ( i l ),-''  ( l i),'  ( ( ! .-'    "
+      ],
+      actionPos: [
+        [0, 5],
+        [1, 5]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/koala.cow.js
+var require_koala_cow = __commonJS({
+  "node_modules/cowsayjs/cows/koala.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "koala",
+      template: [
+        "  \\",
+        "   \\",
+        "       ___  ",
+        "     {~._.~}",
+        "      ( Y )",
+        "     ()~*~()   ",
+        "     (_)-(_)   "
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/kosh.cow.js
+var require_kosh_cow = __commonJS({
+  "node_modules/cowsayjs/cows/kosh.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "kosh",
+      template: [
+        "    \\",
+        "     \\",
+        "      \\",
+        "  ___       _____     ___",
+        " /   \\     /    /|   /   \\",
+        "|     |   /    / |  |     |",
+        "|     |  /____/  |  |     |     ",
+        "|     |  |    |  |  |     |",
+        "|     |  | {} | /   |     |",
+        "|     |  |____|/    |     |",
+        "|     |    |==|     |     |",
+        "|      \\___________/      |",
+        "|                         |",
+        "|                         |"
+      ],
+      actionPos: [
+        [0, 4],
+        [1, 5],
+        [2, 6]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/luke-koala.cow.js
+var require_luke_koala_cow = __commonJS({
+  "node_modules/cowsayjs/cows/luke-koala.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "luke-koala",
+      template: [
+        "  \\",
+        "   \\          .",
+        "       ___   //",
+        "     {~._.~}// ",
+        "      ( Y )K/  ",
+        "     ()~*~()   ",
+        "     (_)-(_)   ",
+        "     Luke    ",
+        "     Skywalker",
+        "     koala   "
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/mech-and-cow.cow.js
+var require_mech_and_cow_cow = __commonJS({
+  "node_modules/cowsayjs/cows/mech-and-cow.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "mech-and-cow",
+      template: [
+        "                                   ,-----.",
+        "                                   |     |",
+        "                                ,--|     |-.",
+        "                         __,----|  |     | |",
+        "                       ,;::     |  `_____' |",
+        "                       `._______|    i^i   |",
+        "                                `----| |---'| .",
+        "                           ,-------._| |== ||//",
+        "                           |       |_|P`.  /'/",
+        "                           `-------' 'Y Y/'/'",
+        "                                     .== /_",
+        "   ^__^                             /   /'|  `i",
+        "   (oo)_______                   /'   /  |   |",
+        "   (__)       )/             /'    /   |   `i",
+        "       ||----w |           ___,;`----'.___L_,-'`__",
+        '       ||     ||          i_____;----.____i""____',
+        ""
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/meow.cow.js
+var require_meow_cow = __commonJS({
+  "node_modules/cowsayjs/cows/meow.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "meow",
+      template: [
+        "  \\",
+        "   \\ ,   _ ___.--'''`--''//-,-_--_.",
+        "      \\`\"' ` || \\\\ \\ \\\\/ / // / ,-\\\\`,_",
+        "     /'`  \\ \\ || Y  | \\|/ / // / - |__ `-,",
+        '    /@"\\  ` \\ `\\ |  | ||/ // | \\/  \\  `-._`-,_.,',
+        "   /  _.-. `.-\\,___/\\ _/|_/_\\_\\/|_/ |     `-._._)",
+        "   `-'``/  /  |  // \\__/\\__  /  \\__/ \\",
+        "        `-'  /-\\/  | -|   \\__ \\   |-' |",
+        "          __/\\ / _/ \\/ __,-'   ) ,' _|'",
+        "         (((__/(((_.' ((___..-'((__,'"
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/milk.cow.js
+var require_milk_cow = __commonJS({
+  "node_modules/cowsayjs/cows/milk.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "milk",
+      template: [
+        " \\     ____________ ",
+        "  \\    |__________|",
+        "      /           /\\",
+        "     /           /  \\",
+        "    /___________/___/|",
+        "    |          |     |",
+        "    |  ==\\ /== |     |",
+        "    |   O   O  | \\ \\ |",
+        "    |     <    |  \\ \\|",
+        "   /|          |   \\ \\",
+        "  / |  \\_____/ |   / /",
+        " / /|          |  / /|",
+        "/||\\|          | /||\\/",
+        "    -------------|   ",
+        "        | |    | | ",
+        "       <__/    \\__>"
+      ],
+      actionPos: [
+        [0, 1],
+        [1, 2]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/moofasa.cow.js
+var require_moofasa_cow = __commonJS({
+  "node_modules/cowsayjs/cows/moofasa.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "moofasa",
+      template: [
+        "       \\    ____",
+        "        \\  /    \\",
+        "          | ^__^ |",
+        "          | (oo) |______",
+        "          | (__) |      )\\/\\",
+        "           \\____/|----w |",
+        "                ||     ||",
+        "",
+        "                 Moofasa"
+      ],
+      actionPos: [
+        [0, 7],
+        [1, 8]
+      ],
+      eyesPos: [
+        [3, 13],
+        [3, 14]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/moose.cow.js
+var require_moose_cow = __commonJS({
+  "node_modules/cowsayjs/cows/moose.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "moose",
+      template: [
+        "  \\",
+        "   \\   \\_\\_    _/_/",
+        "    \\      \\__/",
+        "           (oo)\\_______",
+        "           (__)\\       )\\/\\",
+        "               ||----w |",
+        "               ||     ||"
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3],
+        [2, 4]
+      ],
+      eyesPos: [
+        [3, 12],
+        [3, 13]
+      ],
+      tonguePos: [
+        [5, 12],
+        [5, 13]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/mutilated.cow.js
+var require_mutilated_cow = __commonJS({
+  "node_modules/cowsayjs/cows/mutilated.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "mutilated",
+      template: [
+        "       \\   \\_______",
+        " v__v   \\  \\   O   )",
+        " (oo)      ||----w |",
+        " (__)      ||     ||  \\/\\",
+        "    "
+      ],
+      actionPos: [
+        [0, 7],
+        [1, 8]
+      ],
+      eyesPos: [
+        [2, 2],
+        [2, 3]
+      ],
+      tonguePos: [
+        [4, 2],
+        [4, 3]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/pony-smaller.cow.js
+var require_pony_smaller_cow = __commonJS({
+  "node_modules/cowsayjs/cows/pony-smaller.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "pony-smaller",
+      template: [
+        "     \\      _^^",
+        "      \\   _- oo\\",
+        "          \\----- \\______",
+        "                \\       )\\",
+        "                ||-----|| \\",
+        "                ||     ||"
+      ],
+      actionPos: [
+        [0, 5],
+        [1, 6]
+      ],
+      eyesPos: [
+        [1, 13],
+        [1, 14]
+      ],
+      tonguePos: [
+        [3, 11],
+        [3, 12]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/pony.cow.js
+var require_pony_cow = __commonJS({
+  "node_modules/cowsayjs/cows/pony.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "pony",
+      template: [
+        "       \\          /\\/\\",
+        "        \\         \\/\\/",
+        "         \\        /   -\\",
+        "          \\     /  oo   -\\",
+        "           \\  /           \\",
+        "             |    ---\\    -\\",
+        "             \\--/     \\     \\",
+        "                       |      -\\",
+        "                        \\       -\\         -------------\\    /-\\",
+        "                         \\        \\-------/              ---/    \\",
+        "                          \\                                  |\\   \\",
+        "                           |                                 / |  |",
+        "                           \\                                |  \\  |",
+        "                            |                              /    \\ |",
+        "                            |                             /     \\ |",
+        "                             \\                             \\     \\|",
+        "                              -              /--------\\    |      o",
+        "                               \\+   +---------          \\   |",
+        "                                |   |                   |   \\",
+        "                                |   |                    \\   |",
+        "                                |   |                    |   \\",
+        "                                |   |                     \\   |",
+        "                                 \\  |                     |   |",
+        "                                 |  |                      \\  \\",
+        "                                 |  |                      |   |",
+        "                                 +--+                       ---+"
+      ],
+      actionPos: [
+        [0, 7],
+        [1, 8],
+        [2, 9],
+        [3, 10],
+        [4, 11]
+      ],
+      eyesPos: [
+        [3, 19],
+        [3, 20]
+      ],
+      tonguePos: [
+        [7, 14],
+        [7, 15]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/ren.cow.js
+var require_ren_cow = __commonJS({
+  "node_modules/cowsayjs/cows/ren.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "ren",
+      template: [
+        "   \\",
+        "    \\",
+        "    ____  ",
+        "   /# /_\\_",
+        "  |  |/o\\o\\",
+        "  |  \\\\_/_/",
+        " / |_   |  ",
+        "|  ||\\_ ~| ",
+        "|  ||| \\/  ",
+        "|  |||_    ",
+        " \\//  |    ",
+        "  ||  |    ",
+        "  ||_  \\   ",
+        "  \\_|  o|  ",
+        "  /\\___/   ",
+        " /  ||||__ ",
+        "    (___)_)"
+      ],
+      actionPos: [
+        [0, 3],
+        [1, 4]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/satanic.cow.js
+var require_satanic_cow = __commonJS({
+  "node_modules/cowsayjs/cows/satanic.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "satanic",
+      template: [
+        "     \\",
+        "      \\  (__)  ",
+        "         (\\/)  ",
+        "  /-------\\/    ",
+        " / | 666 ||    ",
+        "*  ||----||      ",
+        "   ~~    ~~      "
+      ],
+      actionPos: [
+        [0, 5],
+        [1, 6]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/sheep.cow.js
+var require_sheep_cow = __commonJS({
+  "node_modules/cowsayjs/cows/sheep.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "sheep",
+      template: [
+        "  \\",
+        "   \\",
+        "       __     ",
+        "      UooU\\.'@@@@@@`.",
+        "      \\__/(@@@@@@@@@@)",
+        "           (@@@@@@@@)",
+        "           `YY~~~~YY'",
+        "            ||    ||"
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3]
+      ],
+      eyesPos: [
+        [3, 7],
+        [3, 8]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/skeleton.cow.js
+var require_skeleton_cow = __commonJS({
+  "node_modules/cowsayjs/cows/skeleton.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "skeleton",
+      template: [
+        "          \\      (__)      ",
+        "           \\     /oo|  ",
+        '            \\   (_"_)*+++++++++*',
+        "                   //I#\\\\\\\\\\\\\\\\I\\",
+        "                   I[I|I|||||I I `",
+        "                   I`I'///'' I I",
+        "                   I I       I I",
+        "                   ~ ~       ~ ~",
+        "                     Scowleton"
+      ],
+      actionPos: [
+        [0, 10],
+        [1, 11],
+        [2, 12]
+      ],
+      eyesPos: [
+        [1, 18],
+        [1, 19]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/small.cow.js
+var require_small_cow = __commonJS({
+  "node_modules/cowsayjs/cows/small.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "small",
+      eyes: "..",
+      template: [
+        "       \\   ,__,",
+        "        \\  (..)____",
+        "           (__)    )\\",
+        "              ||--|| *"
+      ],
+      defEyes: "..",
+      actionPos: [
+        [0, 7],
+        [1, 8]
+      ],
+      eyesPos: [
+        [1, 12],
+        [1, 13]
+      ],
+      tonguePos: [
+        [3, 12],
+        [3, 13]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/snowman.cow.js
+var require_snowman_cow = __commonJS({
+  "node_modules/cowsayjs/cows/snowman.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "snowman",
+      template: [
+        "   \\",
+        " ___###",
+        "   /oo\\ |||",
+        "   \\  / \\|/",
+        '   /""\\  I',
+        "()|    |(I)",
+        "   \\  /  I",
+        '  /""""\\ I',
+        " |      |I",
+        " |      |I",
+        "  \\____/ I"
+      ],
+      actionPos: [
+        [0, 3]
+      ],
+      eyesPos: [
+        [2, 4],
+        [2, 5]
+      ],
+      tonguePos: [
+        [3, 4],
+        [3, 5]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/sodomized.cow.js
+var require_sodomized_cow = __commonJS({
+  "node_modules/cowsayjs/cows/sodomized.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "sodomized",
+      template: [
+        "      \\                _",
+        "       \\              (_)",
+        "        \\   ^__^       / \\",
+        "         \\  (oo)\\_____/_\\ \\",
+        "            (__)\\       ) /",
+        "                ||----w ((",
+        "                ||     ||>>"
+      ],
+      actionPos: [
+        [0, 6],
+        [1, 7],
+        [2, 8],
+        [3, 9]
+      ],
+      eyesPos: [
+        [3, 13],
+        [3, 14]
+      ],
+      tonguePos: [
+        [5, 13],
+        [5, 14]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/stegosaurus.cow.js
+var require_stegosaurus_cow = __commonJS({
+  "node_modules/cowsayjs/cows/stegosaurus.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "stegosaurus",
+      template: [
+        "\\                             .       .",
+        " \\                           / `.   .' \"",
+        "  \\                  .---.  <    > <    >  .---.",
+        "   \\                 |    \\  \\ - ~ ~ - /  /    |",
+        "         _____          ..-~             ~-..-~",
+        "        |     |   \\~~~\\.'                    `./~~~/",
+        "       ---------   \\__/                        \\__/",
+        `      .'  O    \\     /               /       \\  "`,
+        "     (_____,    `._.'               |         }  \\/~~~/",
+        "      `----.          /       }     |        /    \\__/",
+        "            `-.      |       /      |       /      `. ,~~|",
+        "                ~-.__|      /_ - ~ ^|      /- _      `..-'",
+        "                     |     /        |     /     ~-.     `-. _  _  _",
+        "                     |_____|        |_____|         ~ - . _ _ _ _ _>"
+      ],
+      actionPos: [
+        [0, 0],
+        [1, 1],
+        [2, 2],
+        [3, 3]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/stimpy.cow.js
+var require_stimpy_cow = __commonJS({
+  "node_modules/cowsayjs/cows/stimpy.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "stimpy",
+      template: [
+        "  \\     .    _  .    ",
+        "   \\    |\\_|/__/|    ",
+        "       / / \\/ \\  \\  ",
+        "      /__|O||O|__ \\ ",
+        "     |/_ \\_/\\_/ _\\ |  ",
+        "     | | (____) | ||  ",
+        "     \\/\\___/\\__/  // ",
+        "     (_/         ||",
+        "      |          ||",
+        "      |          ||\\   ",
+        "       \\        //_/  ",
+        "        \\______//",
+        "       __ || __||",
+        "      (____(____)"
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/supermilker.cow.js
+var require_supermilker_cow = __commonJS({
+  "node_modules/cowsayjs/cows/supermilker.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "supermilker",
+      template: [
+        "  \\   ^__^",
+        "   \\  (oo)\\_______        ________",
+        "      (__)\\       )\\/\\    |Super |",
+        "          ||----W |       |Milker|",
+        "          ||    UDDDDDDDDD|______|"
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3]
+      ],
+      eyesPos: [
+        [1, 7],
+        [1, 8]
+      ],
+      tonguePos: [
+        [3, 7],
+        [3, 8]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/surgery.cow.js
+var require_surgery_cow = __commonJS({
+  "node_modules/cowsayjs/cows/surgery.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "surgery",
+      template: [
+        "          \\           \\  /",
+        "           \\           \\/",
+        "               (__)    /\\",
+        "               (oo)   O  O",
+        "               _\\/_   //",
+        "         *    (    ) //",
+        "          \\  (\\\\    //",
+        "           \\(  \\\\    )",
+        "            (   \\\\   )   /\\",
+        "  ___[\\______/^^^^^^^\\__/) o-)__",
+        " |\\__[=======______//________)__\\",
+        " \\|_______________//____________|",
+        "     |||      || //||     |||",
+        "     |||      || @.||     |||",
+        "      ||      \\/  .\\/      ||",
+        "                 . .",
+        "                '.'.`",
+        "",
+        "            COW-OPERATION"
+      ],
+      actionPos: [
+        [0, 10],
+        [1, 11]
+      ],
+      eyesPos: [
+        [3, 16],
+        [3, 17]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/suse.cow.js
+var require_suse_cow = __commonJS({
+  "node_modules/cowsayjs/cows/suse.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "suse",
+      template: [
+        "  \\",
+        "   \\____",
+        "  /@    ~-.",
+        "  \\/ __ .- |",
+        "   // //  @"
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/telebears.cow.js
+var require_telebears_cow = __commonJS({
+  "node_modules/cowsayjs/cows/telebears.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "telebears",
+      template: [
+        "      \\                _",
+        "       \\              (_)   <-- TeleBEARS",
+        "        \\   ^__^       / \\",
+        "         \\  (oo)\\_____/_\\ \\",
+        "            (__)\\  you  ) /",
+        "                ||----w ((",
+        "                ||     ||>> "
+      ],
+      actionPos: [
+        [0, 6],
+        [1, 7],
+        [2, 8],
+        [3, 9]
+      ],
+      eyesPos: [
+        [3, 13],
+        [3, 14]
+      ],
+      tonguePos: [
+        [5, 13],
+        [5, 14]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/three-eyes.cow.js
+var require_three_eyes_cow = __commonJS({
+  "node_modules/cowsayjs/cows/three-eyes.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "three-eyes",
+      template: [
+        "        \\  ^___^",
+        "         \\ (ooo)\\_______",
+        "           (___)\\       )\\/\\",
+        "                ||----w |",
+        "                ||     ||"
+      ],
+      actionPos: [
+        [0, 8],
+        [1, 9]
+      ],
+      eyesPos: [
+        [1, 12],
+        [1, 13],
+        [1, 14]
+      ],
+      tonguePos: [
+        [3, 12],
+        [3, 13]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/turkey.cow.js
+var require_turkey_cow = __commonJS({
+  "node_modules/cowsayjs/cows/turkey.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "turkey",
+      template: [
+        "  \\                                  ,+*^^*+___+++_",
+        "   \\                           ,*^^^^              )",
+        "    \\                       _+*                     ^**+_",
+        "     \\                    +^       _ _++*+_+++_,         )",
+        "              _+^^*+_    (     ,+*^ ^          \\+_        )",
+        "             {       )  (    ,(    ,_+--+--,      ^)      ^\\",
+        "            { (@)    } f   ,(  ,+-^ __*_*_  ^^\\_   ^\\       )",
+        "           {:;-/    (_+*-+^^^^^+*+*<_ _++_)_    )    )      /",
+        "          ( /  (    (        ,___    ^*+_+* )   <    <      \\",
+        "           U _/     )    *--<  ) ^\\-----++__)   )    )       )",
+        "            (      )  _(^)^^))  )  )\\^^^^^))^*+/    /       /",
+        "          (      /  (_))_^)) )  )  ))^^^^^))^^^)__/     +^^",
+        "         (     ,/    (^))^))  )  ) ))^^^^^^^))^^)       _)",
+        "          *+__+*       (_))^)  ) ) ))^^^^^^))^^^^^)____*^",
+        "          \\             \\_)^)_)) ))^^^^^^^^^^))^^^^)",
+        "           (_             ^\\__^^^^^^^^^^^^))^^^^^^^)",
+        "             ^\\___            ^\\__^^^^^^))^^^^^^^^)\\\\",
+        "                  ^^^^^\\uuu/^^\\uuu/^^^^\\^\\^\\^\\^\\^\\^\\^\\",
+        "                     ___) >____) >___   ^\\_\\_\\_\\_\\_\\_\\)",
+        "                    ^^^//\\\\_^^//\\\\_^       ^(\\_\\_\\_\\)",
+        "                      ^^^ ^^ ^^^ ^"
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3],
+        [2, 4],
+        [3, 5]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/turtle.cow.js
+var require_turtle_cow = __commonJS({
+  "node_modules/cowsayjs/cows/turtle.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "turtle",
+      template: [
+        "    \\                                  ___-------___",
+        "     \\                             _-~~             ~~-_",
+        "      \\                         _-~                    /~-_",
+        "             /^\\__/^\\         /~  \\                   /    \\",
+        "           /|  O|| O|        /      \\_______________/        \\",
+        "          | |___||__|      /       /                \\          \\",
+        "          |          \\    /      /                    \\          \\",
+        "          |   (_______) /______/                        \\_________ \\",
+        "          |         / /         \\                      /            \\",
+        "           \\         \\^\\\\         \\                  /               \\     /",
+        "             \\         ||           \\______________/      _-_       //\\__//",
+        "               \\       ||------_-~~-_ ------------- \\ --/~   ~\\    || __/",
+        "                 ~-----||====/~     |==================|       |/~~~~~",
+        "                  (_(__/  ./     /                    \\_\\      \\.",
+        "                         (_(___/                         \\_____)_)"
+      ],
+      actionPos: [
+        [0, 4],
+        [1, 5],
+        [2, 6]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/tux.cow.js
+var require_tux_cow = __commonJS({
+  "node_modules/cowsayjs/cows/tux.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "tux",
+      template: [
+        "   \\",
+        "    \\",
+        "        .--.",
+        "       |o_o |",
+        "       |:_/ |",
+        "      //   \\ \\",
+        "     (|     | )",
+        "    /'\\_   _/`\\",
+        "    \\___)=(___/",
+        ""
+      ],
+      actionPos: [
+        [0, 3],
+        [1, 4]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/udder.cow.js
+var require_udder_cow = __commonJS({
+  "node_modules/cowsayjs/cows/udder.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "udder",
+      template: [
+        "  \\",
+        "   \\    (__)",
+        "        o o\\",
+        "       ('') \\---------",
+        "          \\           \\",
+        "           |          |\\",
+        "           ||---(  )_|| *",
+        "           ||    UU  ||",
+        "           ==        =="
+      ],
+      actionPos: [
+        [0, 2],
+        [1, 3]
+      ],
+      eyesPos: [
+        [2, 8],
+        [2, 10]
+      ],
+      tonguePos: [
+        [4, 8],
+        [4, 9]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/unipony-smaller.cow.js
+var require_unipony_smaller_cow = __commonJS({
+  "node_modules/cowsayjs/cows/unipony-smaller.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "unipony-smaller",
+      template: [
+        "   \\        \\",
+        "    \\        \\",
+        "     \\       _\\^",
+        "      \\    _- oo\\",
+        "           \\---- \\______",
+        "                 \\       )\\",
+        "                ||-----||  \\",
+        "                ||     ||"
+      ],
+      actionPos: [
+        [0, 3],
+        [1, 4],
+        [2, 5],
+        [3, 6]
+      ],
+      eyesPos: [
+        [3, 14],
+        [3, 15]
+      ],
+      tonguePos: [
+        [5, 12],
+        [5, 13]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/unipony.cow.js
+var require_unipony_cow = __commonJS({
+  "node_modules/cowsayjs/cows/unipony.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "unipony",
+      template: [
+        "   \\             \\",
+        "    \\             \\_",
+        "     \\             \\\\",
+        "      \\             \\\\/\\",
+        "       \\            _\\\\/",
+        "        \\         /   -\\",
+        "         \\      /  oo   -\\",
+        "          \\   /           \\",
+        "             |    ---\\    -\\",
+        "             \\--/     \\     \\",
+        "                       |      -\\",
+        "                        \\       -\\         -------------\\    /-\\",
+        "                         \\        \\-------/              ---/    \\",
+        "                          \\                                  |\\   \\",
+        "                           |                                 / |  |",
+        "                           \\                                |  \\  |",
+        "                            |                              /    \\ |",
+        "                            |                             /     \\ |",
+        "                             \\                             \\     \\|",
+        "                              -              /--------\\    |      o",
+        "                               \\+   +---------          \\   |",
+        "                                |   |                   |   \\",
+        "                                |   |                    \\   |",
+        "                                |   |                    |   \\",
+        "                                |   |                     \\   |",
+        "                                 \\  |                     |   |",
+        "                                 |  |                      \\  \\",
+        "                                 |  |                      |   |",
+        "                                 +--+                       ---+"
+      ],
+      actionPos: [
+        [0, 3],
+        [1, 4],
+        [2, 5],
+        [3, 6],
+        [4, 7],
+        [5, 8],
+        [6, 9],
+        [7, 10]
+      ],
+      eyesPos: [
+        [6, 19],
+        [6, 20]
+      ],
+      tonguePos: [
+        [10, 14],
+        [10, 15]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/vader-koala.cow.js
+var require_vader_koala_cow = __commonJS({
+  "node_modules/cowsayjs/cows/vader-koala.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "vader-koala",
+      template: [
+        "   \\",
+        "    \\        .",
+        "     .---.  //",
+        "    Y|o o|Y//",
+        "   /_(i=i)K/",
+        "   ~()~*~()~",
+        "    (_)-(_)",
+        "",
+        "     Darth",
+        "     Vader",
+        "     koala"
+      ],
+      actionPos: [
+        [0, 3],
+        [1, 4]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/vader.cow.js
+var require_vader_cow = __commonJS({
+  "node_modules/cowsayjs/cows/vader.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "vader",
+      template: [
+        "        \\    ,-^-.",
+        "         \\   !oYo!",
+        "          \\ /./=\\.\\______",
+        "               ##        )\\/\\",
+        "                ||-----w||",
+        "                ||      ||",
+        "",
+        "               Cowth Vader"
+      ],
+      actionPos: [
+        [0, 8],
+        [1, 9],
+        [2, 10]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/www.cow.js
+var require_www_cow = __commonJS({
+  "node_modules/cowsayjs/cows/www.cow.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      name: "www",
+      template: [
+        "        \\   ^__^",
+        "         \\  (oo)\\_______",
+        "            (__)\\       )\\/\\",
+        "                ||--WWW |",
+        "                ||     ||"
+      ],
+      actionPos: [
+        [0, 8],
+        [1, 9]
+      ],
+      eyesPos: [
+        [1, 13],
+        [1, 14]
+      ],
+      tonguePos: [
+        [3, 13],
+        [3, 14]
+      ]
+    };
+  }
+});
+
+// node_modules/cowsayjs/cows/index.js
+var require_cows = __commonJS({
+  "node_modules/cowsayjs/cows/index.js"(exports, module) {
+    "use strict";
+    var utils = require_utils();
+    var corral = [
+      require_default_cow(),
+      require_apt_cow(),
+      require_beavis_zen_cow(),
+      require_blowfish_cow(),
+      require_bong_cow(),
+      require_bud_frogs_cow(),
+      require_bunny_cow(),
+      require_calvin_cow(),
+      require_cheese_cow(),
+      require_cock_cow(),
+      require_cower_cow(),
+      require_daemon_cow(),
+      require_dragon_and_cow_cow(),
+      require_dragon_cow(),
+      require_duck_cow(),
+      require_elephant_in_snake_cow(),
+      require_elephant_cow(),
+      require_eyes_cow(),
+      require_flaming_sheep_cow(),
+      require_fox_cow(),
+      require_ghostbusters_cow(),
+      require_gnu_cow(),
+      require_head_in_cow(),
+      require_hellokitty_cow(),
+      require_kangaroo_cow(),
+      require_kiss_cow(),
+      require_kitty_cow(),
+      require_koala_cow(),
+      require_kosh_cow(),
+      require_luke_koala_cow(),
+      require_mech_and_cow_cow(),
+      require_meow_cow(),
+      require_milk_cow(),
+      require_moofasa_cow(),
+      require_moose_cow(),
+      require_mutilated_cow(),
+      require_pony_smaller_cow(),
+      require_pony_cow(),
+      require_ren_cow(),
+      require_satanic_cow(),
+      require_sheep_cow(),
+      require_skeleton_cow(),
+      require_small_cow(),
+      require_snowman_cow(),
+      require_sodomized_cow(),
+      require_stegosaurus_cow(),
+      require_stimpy_cow(),
+      require_supermilker_cow(),
+      require_surgery_cow(),
+      require_suse_cow(),
+      require_telebears_cow(),
+      require_three_eyes_cow(),
+      require_turkey_cow(),
+      require_turtle_cow(),
+      require_tux_cow(),
+      require_udder_cow(),
+      require_unipony_smaller_cow(),
+      require_unipony_cow(),
+      require_vader_koala_cow(),
+      require_vader_cow(),
+      require_www_cow()
+    ];
+    var customCorral = [];
+    function truncate(str, len) {
+      return typeof str === "string" ? str.slice(0, len) : "";
+    }
+    function fix(value, empty, undef, len) {
+      if (typeof value !== "string") {
+        return truncate(undef, len);
+      }
+      if (value.length === 0) {
+        return truncate(empty, len);
+      }
+      return truncate(value, len);
+    }
+    function validatePositionArray(arr) {
+      if (arr === void 0) {
+        return true;
+      }
+      if (!Array.isArray(arr)) {
+        return false;
+      }
+      return arr.every(function(pos) {
+        return Array.isArray(pos) && pos.length === 2 && typeof pos[0] === "number" && typeof pos[1] === "number";
+      });
+    }
+    function copyCow(cow) {
+      var copier = function(pos) {
+        return [pos[0], pos[1]];
+      };
+      return {
+        name: cow.name,
+        defEyes: cow.defEyes,
+        defTongue: cow.defTongue,
+        template: cow.template.slice(),
+        actionPos: cow.actionPos ? cow.actionPos.map(copier) : void 0,
+        eyesPos: cow.eyesPos ? cow.eyesPos.map(copier) : void 0,
+        tonguePos: cow.tonguePos ? cow.tonguePos.map(copier) : void 0
+      };
+    }
+    function validateCow(cow, name) {
+      var valid = true;
+      valid = valid && typeof cow === "object" && cow !== null && !Array.isArray(cow);
+      valid = valid && Array.isArray(cow.template);
+      valid = valid && cow.template.every(function(line) {
+        return typeof line === "string";
+      });
+      valid = valid && (cow.defEyes === void 0 || typeof cow.defEyes === "string");
+      valid = valid && (cow.defTongue === void 0 || typeof cow.defTongue === "string");
+      valid = valid && validatePositionArray(cow.actionPos);
+      valid = valid && validatePositionArray(cow.eyesPos);
+      valid = valid && validatePositionArray(cow.tonguePos);
+      if (name) {
+        valid = valid && typeof cow.name === "string" && cow.name.length > 0;
+      }
+      return valid;
+    }
+    function getCow(name) {
+      var cow;
+      if (typeof name === "string") {
+        cow = utils.find(corral.concat(customCorral), function(cow2) {
+          return cow2.name === name;
+        });
+      }
+      if (cow === void 0) {
+        cow = corral[0];
+      }
+      return copyCow(cow);
+    }
+    function addCow(cow) {
+      if (!validateCow(cow, true)) {
+        return false;
+      }
+      if (getCow(cow.name).name === cow.name) {
+        return false;
+      }
+      customCorral.push(cow);
+      customCorral.sort(function(a, b) {
+        return a.name.localeCompare(b.name);
+      });
+      return true;
+    }
+    function removeCow(name) {
+      if (typeof name !== "string") {
+        return void 0;
+      }
+      var ind = customCorral.findIndex(function(cow) {
+        return cow.name === name;
+      });
+      if (ind !== -1) {
+        return customCorral.splice(ind, 1)[0];
+      }
+      return void 0;
+    }
+    function renderCow(cow, action, eyes, tongue) {
+      var lines = cow.template.slice();
+      var values = [];
+      var act = -1;
+      if (cow.tonguePos) {
+        values.push({ pos: cow.tonguePos, str: fix(tongue, cow.defTongue, "  ", 2) });
+      }
+      if (cow.eyesPos) {
+        values.push({ pos: cow.eyesPos, str: fix(eyes, cow.defEyes, "oo", 2) });
+      }
+      if (cow.actionPos) {
+        values.push({ pos: cow.actionPos, str: fix(action, void 0, void 0, 1) });
+        act = values.length - 1;
+      }
+      values.forEach(function(val, i) {
+        var fix2 = 0;
+        var f = i !== act;
+        val.pos.forEach(function(pos, j) {
+          var char = val.str[j] || (f && j === 1 ? "" : val.str.slice(-1));
+          var pos0 = pos[0];
+          var pos1 = pos[1] - fix2;
+          var line = lines[pos0];
+          lines[pos0] = line.slice(0, pos1) + char + line.slice(pos1 + 1);
+          if (char.length === 0) {
+            ++fix2;
+          }
+        });
+      });
+      return lines.join("\n");
+    }
+    module.exports = {
+      corral: corral.map(copyCow),
+      customCorral,
+      validateCow,
+      getCow,
+      addCow,
+      removeCow,
+      renderCow
+    };
+  }
+});
+
+// node_modules/cowsayjs/lib/index.js
+var require_lib = __commonJS({
+  "node_modules/cowsayjs/lib/index.js"(exports, module) {
+    "use strict";
+    var box = require_box();
+    var mode = require_mode();
+    var cows = require_cows();
+    function extendOptions(options, property, value) {
+      var extended = typeof options === "object" && options !== null ? {
+        message: options.message,
+        cow: options.cow,
+        mode: options.mode,
+        eyes: options.eyes,
+        tongue: options.tongue,
+        wrap: options.wrap,
+        action: options.action
+      } : {};
+      extended[property] = value;
+      return extended;
+    }
+    function moo(message, options) {
+      var opts = typeof message === "object" && message !== null ? message : extendOptions(options, "message", message);
+      var action = opts.action === "think" ? "think" : "say";
+      var act = action === "think" ? "o" : "\\";
+      var eyes;
+      var tongue;
+      if (typeof opts.mode === "string") {
+        var face = mode.modeFace(opts.mode);
+        eyes = face.eyes;
+        tongue = face.tongue;
+      }
+      if (typeof opts.eyes === "string" && eyes === void 0) {
+        eyes = opts.eyes;
+      }
+      if (typeof opts.tongue === "string" && tongue === void 0) {
+        tongue = opts.tongue;
+      }
+      var cow;
+      switch (typeof opts.cow) {
+        case "string":
+          cow = cows.getCow(opts.cow);
+          break;
+        case "object":
+          cow = cows.validateCow(opts.cow) ? opts.cow : cows.corral[0];
+          break;
+        default:
+          cow = cows.corral[0];
+      }
+      return box.perform(action, opts.message, opts.wrap) + cows.renderCow(cow, act, eyes, tongue);
+    }
+    function cowsay3(message, options) {
+      return typeof message === "object" && message !== null ? moo(extendOptions(message, "action", "say")) : moo(message, extendOptions(options, "action", "say"));
+    }
+    function cowthink(message, options) {
+      return typeof message === "object" && message !== null ? moo(extendOptions(message, "action", "think")) : moo(message, extendOptions(options, "action", "think"));
+    }
+    module.exports = {
+      moo,
+      cowsay: cowsay3,
+      cowthink
+    };
+  }
+});
+
 // src/js/cb/cb-api.mts
 var CB_USER_GROUPS = {
   owner: { userColor: "o" },
@@ -49,7 +2547,9 @@ function printCommandResult(ctx, message, theme = NOTICE_COLOR_THEME.staff) {
     ...theme,
     toUsername: user.username
   };
-  room.sendNotice(message, p);
+  if (typeof room != "undefined") {
+    room.sendNotice(message, p);
+  }
 }
 function printToOwner(ctx, message, theme = NOTICE_COLOR_THEME.staff) {
   const { user, room, kv = null } = ctx;
@@ -57,7 +2557,9 @@ function printToOwner(ctx, message, theme = NOTICE_COLOR_THEME.staff) {
     ...theme,
     toUsername: room.owner
   };
-  room.sendNotice(message, p);
+  if (typeof room != "undefined") {
+    room.sendNotice(message, p);
+  }
 }
 function printToUser(ctx, message, username, theme = NOTICE_COLOR_THEME.userError) {
   const { user = null, room, kv = null } = ctx;
@@ -65,14 +2567,18 @@ function printToUser(ctx, message, username, theme = NOTICE_COLOR_THEME.userErro
     ...theme,
     toUsername: username
   };
-  room.sendNotice(message, p);
+  if (typeof room != "undefined") {
+    room.sendNotice(message, p);
+  }
 }
 function printToEveryone(ctx, message, theme = NOTICE_COLOR_THEME.user) {
   const { user = null, room, kv = null } = ctx;
   const p = {
     ...theme
   };
-  room.sendNotice(message, p);
+  if (typeof room != "undefined") {
+    room.sendNotice(message, p);
+  }
 }
 
 // src/js/defaults.mts
@@ -287,7 +2793,7 @@ function getSettings() {
               settings[name] = v;
             }
           }
-        } catch (ReferenceError) {
+        } catch (ReferenceError2) {
           settings[name] = defaultValue;
         }
       }
@@ -1040,167 +3546,6 @@ var ModuleBase = class {
   }
 };
 
-// src/js/app-module/ModuleChatFilter.mts
-var LEET_TABLE = {
-  a: ["@", "4"],
-  b: ["8"],
-  c: ["("],
-  e: ["3"],
-  g: ["6"],
-  h: ["#"],
-  i: ["!", "1"],
-  l: ["1"],
-  o: ["0"],
-  s: ["$"],
-  t: ["7"],
-  z: ["2"]
-};
-var ModuleChatFilter = class extends ModuleBase {
-  onMessage(ctx) {
-    const { message = null, user, kv = null } = ctx;
-    const userName = user.username;
-    UserChatInfo.sendPendingNotices(ctx, userName);
-  }
-  onMessageTransform(ctx) {
-    const { message, user, kv = null } = ctx;
-    let wordRegexString = "([a-zA-Z\xE0-\xFC\xC0-\xDC";
-    Object.values(LEET_TABLE).forEach((l) => {
-      l.forEach((c) => {
-        wordRegexString = wordRegexString.concat(c);
-      });
-    });
-    wordRegexString = wordRegexString.concat("])+");
-    let wordRegex = /([a-zA-Zà-üÀ-Ü])+/g;
-    wordRegex = new RegExp(wordRegexString, "g");
-    const words = message.orig.match(wordRegex);
-    function leetChar(chr) {
-      let rl = [];
-      if (Object.hasOwn(LEET_TABLE, chr.toLowerCase())) {
-        rl.push(chr);
-        rl = rl.concat(LEET_TABLE[chr.toLowerCase()]);
-      } else {
-        rl.push(chr);
-      }
-      return rl;
-    }
-    function leetString(str) {
-      const rl = [];
-      if (str.length > 1) {
-        leetChar(str[0]).forEach((e1) => {
-          leetString(str.substring(1)).forEach((e2) => {
-            rl.push(e1.concat(e2));
-          });
-        });
-      }
-      if (str.length === 1) {
-        leetChar(str[0]).forEach((e1) => {
-          rl.push(e1);
-        });
-      } else {
-        rl.push(str);
-      }
-      return rl;
-    }
-    function stringSimilarity(str1, str2, gramSize = 3) {
-      function getNGrams(s, len) {
-        s = " ".repeat(len - 1) + s.toLowerCase() + " ".repeat(len - 1);
-        const v = new Array(s.length - len + 1);
-        for (let i = 0; i < v.length; i++) {
-          v[i] = s.slice(i, i + len);
-        }
-        return v;
-      }
-      if (!(str1 === null || str1 === void 0 ? void 0 : str1.length) || !(str2 === null || str2 === void 0 ? void 0 : str2.length)) {
-        return 0;
-      }
-      const s1 = str1.length < str2.length ? str1 : str2;
-      const s2 = str1.length < str2.length ? str2 : str1;
-      const pairs1 = getNGrams(s1, gramSize);
-      const pairs2 = getNGrams(s2, gramSize);
-      const set = new Set(pairs1);
-      const total = pairs2.length;
-      let hits = 0;
-      for (let item of pairs2) {
-        if (set.delete(item)) {
-          hits++;
-        }
-      }
-      return hits * 100 / total;
-    }
-    function compareWord(word, badWord, collator, fuzzyScoreMin) {
-      if (collator.compare(word, badWord) === 0) {
-        return badWord;
-      }
-      const bwl = leetString(badWord);
-      bwl.forEach((ebw) => {
-        if (collator.compare(word, ebw) === 0) {
-          return ebw;
-        }
-      });
-      let found = false;
-      found = bwl.some((ebw) => {
-        if (collator.compare(word, ebw) === 0) {
-          return ebw;
-        } else {
-          return false;
-        }
-      });
-      if (found) {
-        return found;
-      }
-      if (fuzzyScoreMin > 0) {
-        if (stringSimilarity(badWord, word) > fuzzyScoreMin) {
-          return badWord;
-        }
-        found = false;
-        found = bwl.some((ebw) => {
-          if (stringSimilarity(ebw, word) > fuzzyScoreMin) {
-            return ebw;
-          } else {
-            return false;
-          }
-        });
-        if (found) {
-          return found;
-        }
-      }
-      return false;
-    }
-    function searchBadWord(wordsList, badWordList, fuzzyScoreMin) {
-      const collator = Intl.Collator("en-US", { sensitivity: "base" });
-      const foundBadWords2 = [];
-      let found = false;
-      wordsList.forEach((word) => {
-        found = false;
-        found = badWordList.some((bw) => {
-          return compareWord(word, bw, collator, fuzzyScoreMin);
-        });
-        if (found) {
-          foundBadWords2.push(word);
-        }
-      });
-      return foundBadWords2;
-    }
-    let newMessage = message.orig;
-    let foundBadWords = [];
-    foundBadWords = searchBadWord(words, SETTINGS.chatBadWords, SETTINGS.chatFuzzyScoreForBW);
-    if (foundBadWords.length > 0) {
-      foundBadWords.forEach((bw) => {
-        let newWord = bw.slice(0, 1);
-        newWord = newWord.padEnd(bw.length, ".");
-        newMessage = newMessage.replaceAll(bw, newWord);
-        message.setBody(newMessage);
-      });
-    }
-    foundBadWords = searchBadWord(words, SETTINGS.chatVeryBadWords, SETTINGS.chatFuzzyScoreForVBW);
-    if (foundBadWords.length > 0) {
-      message.setSpam(true);
-      const n = user.username + " " + SETTINGS.chatNoticeToUserVBW;
-      UserChatInfo.addPendingNotice(ctx, user.username, n);
-    }
-  }
-};
-
 // src/js/app-module/ModuleTimer.mts
 var ModuleTimer = class _ModuleTimer extends ModuleBase {
   liveTimers;
@@ -1398,9 +3743,10 @@ var ModuleTimer = class _ModuleTimer extends ModuleBase {
 var DEFAULT_USER_RIGHTS = {
   guru: 4294967295,
   debug: 2 /* debugShow */ | 4 /* debugChange */,
-  owner: 8 /* settingsShow */ | 16 /* settingsSet */ | 32 /* statShow */ | 64 /* timerAdmin */ | 128 /* timerShow */,
-  admin: 8 /* settingsShow */ | 16 /* settingsSet */ | 32 /* statShow */ | 64 /* timerAdmin */ | 128 /* timerShow */,
-  monitor: 8 /* settingsShow */ | 128 /* timerShow */
+  owner: 8 /* settingsShow */ | 16 /* settingsSet */ | 32 /* statShow */ | 64 /* timerAdmin */ | 128 /* timerShow */ | 256 /* cowsay */,
+  admin: 8 /* settingsShow */ | 16 /* settingsSet */ | 32 /* statShow */ | 64 /* timerAdmin */ | 128 /* timerShow */ | 256 /* cowsay */,
+  monitor: 8 /* settingsShow */ | 128 /* timerShow */ | 256 /* cowsay */,
+  user: 256 /* cowsay */
 };
 function getUserCapabilities(userObj) {
   const username = userObj.username;
@@ -1420,6 +3766,7 @@ function getUserCapabilities(userObj) {
   if (SETTINGS.userStaffMembersMonitor && Array.isArray(SETTINGS.userStaffMembersMonitor) && username && SETTINGS.userStaffMembersMonitor.includes(username)) {
     capabilities = capabilities | DEFAULT_USER_RIGHTS.monitor;
   }
+  capabilities = capabilities | DEFAULT_USER_RIGHTS.user;
   return capabilities;
 }
 
@@ -1538,7 +3885,7 @@ function debugPrintKV(ctx) {
       v = kv.get(key);
       m = key + ": " + JSON.stringify(v, null, "	");
       printCommandResult(ctx, m, NOTICE_COLOR_THEME.staff);
-    } catch (ReferenceError) {
+    } catch (ReferenceError2) {
       logIt("unknown key: " + key);
     }
   });
@@ -1873,6 +4220,7 @@ function cliStatShowTipStats(ctx) {
 }
 
 // src/js/command/command-test.mts
+var import_cowsayjs = __toESM(require_lib(), 1);
 var AVAILABLE_STAFF_COMMANDS5 = [
   {
     name: "test",
@@ -1887,6 +4235,13 @@ var AVAILABLE_STAFF_COMMANDS5 = [
     capabilities: 4 /* debugChange */,
     func: testRandomID,
     help: "testing ID generation"
+  },
+  {
+    name: "test",
+    subCommand: "cowsay",
+    capabilities: 4 /* debugChange */,
+    func: testCowsay,
+    help: "testing cowsay"
   }
   // { name: 'test', subCommand: 'testExtend', capabilities: CAPABILITY.debugChange, 
   // func: testExtendClass, help: 'test JS extend classes' },
@@ -1903,6 +4258,12 @@ var AVAILABLE_USER_COMMANDS2 = [
 function init5() {
   extendAvaillableStaffCommands(AVAILABLE_STAFF_COMMANDS5);
   extendAvaillableUserCommands(AVAILABLE_USER_COMMANDS2);
+}
+function testCowsay(ctx) {
+  const { message = null, user = null, room = null, kv = null } = ctx;
+  const output = (0, import_cowsayjs.cowsay)("Hello from typescript!");
+  console.log(output);
+  printCommandResult(ctx, output.replaceAll(" ", "\xA0"), NOTICE_COLOR_THEME.staff);
 }
 function testRandomID(ctx) {
   const { message = null, user = null, room = null, kv = null } = ctx;
@@ -2140,6 +4501,231 @@ function cliTimerListTimers(ctx) {
   printCommandResult(ctx, msg, NOTICE_COLOR_THEME.staff);
 }
 
+// src/js/app-module/ModuleChatFilter.mts
+var import_cowsayjs2 = __toESM(require_lib(), 1);
+var LEET_TABLE = {
+  a: ["@", "4"],
+  b: ["8"],
+  c: ["("],
+  e: ["3"],
+  g: ["6"],
+  h: ["#"],
+  i: ["!", "1"],
+  l: ["1"],
+  o: ["0"],
+  s: ["$"],
+  t: ["7"],
+  z: ["2"]
+};
+function leetChar(chr) {
+  let rl = [];
+  if (Object.hasOwn(LEET_TABLE, chr.toLowerCase())) {
+    rl.push(chr);
+    rl = rl.concat(LEET_TABLE[chr.toLowerCase()]);
+  } else {
+    rl.push(chr);
+  }
+  return rl;
+}
+function leetString(str) {
+  const rl = [];
+  if (str.length > 1) {
+    leetChar(str[0]).forEach((e1) => {
+      leetString(str.substring(1)).forEach((e2) => {
+        rl.push(e1.concat(e2));
+      });
+    });
+  }
+  if (str.length === 1) {
+    leetChar(str[0]).forEach((e1) => {
+      rl.push(e1);
+    });
+  } else {
+    rl.push(str);
+  }
+  return rl;
+}
+function stringSimilarity(str1, str2, gramSize = 3) {
+  function getNGrams(s, len) {
+    s = " ".repeat(len - 1) + s.toLowerCase() + " ".repeat(len - 1);
+    const v = new Array(s.length - len + 1);
+    for (let i = 0; i < v.length; i++) {
+      v[i] = s.slice(i, i + len);
+    }
+    return v;
+  }
+  if (!(str1 === null || str1 === void 0 ? void 0 : str1.length) || !(str2 === null || str2 === void 0 ? void 0 : str2.length)) {
+    return 0;
+  }
+  const s1 = str1.length < str2.length ? str1 : str2;
+  const s2 = str1.length < str2.length ? str2 : str1;
+  const pairs1 = getNGrams(s1, gramSize);
+  const pairs2 = getNGrams(s2, gramSize);
+  const set = new Set(pairs1);
+  const total = pairs2.length;
+  let hits = 0;
+  for (let item of pairs2) {
+    if (set.delete(item)) {
+      hits++;
+    }
+  }
+  return hits * 100 / total;
+}
+function compareWord(word, badWord, collator, fuzzyScoreMin) {
+  if (collator.compare(word, badWord) === 0) {
+    return badWord;
+  }
+  const bwl = leetString(badWord);
+  bwl.forEach((ebw) => {
+    if (collator.compare(word, ebw) === 0) {
+      return ebw;
+    }
+  });
+  let found = false;
+  found = bwl.some((ebw) => {
+    if (collator.compare(word, ebw) === 0) {
+      return ebw;
+    } else {
+      return false;
+    }
+  });
+  if (found) {
+    return found;
+  }
+  if (fuzzyScoreMin > 0) {
+    if (stringSimilarity(badWord, word) > fuzzyScoreMin) {
+      return badWord;
+    }
+    found = false;
+    found = bwl.some((ebw) => {
+      if (stringSimilarity(ebw, word) > fuzzyScoreMin) {
+        return ebw;
+      } else {
+        return false;
+      }
+    });
+    if (found) {
+      return found;
+    }
+  }
+  return false;
+}
+function searchBadWord(wordsList, badWordList, fuzzyScoreMin) {
+  const collator = Intl.Collator("en-US", { sensitivity: "base" });
+  const foundBadWords = [];
+  let found = false;
+  wordsList.forEach((word) => {
+    found = false;
+    found = badWordList.some((bw) => {
+      return compareWord(word, bw, collator, fuzzyScoreMin);
+    });
+    if (found) {
+      foundBadWords.push(word);
+    }
+  });
+  return foundBadWords;
+}
+function splitMessageText(messageText) {
+  let wordRegexString = "([a-zA-Z\xE0-\xFC\xC0-\xDC";
+  Object.values(LEET_TABLE).forEach((l) => {
+    l.forEach((c) => {
+      wordRegexString = wordRegexString.concat(c);
+    });
+  });
+  wordRegexString = wordRegexString.concat("])+");
+  let wordRegex = /([a-zA-Zà-üÀ-Ü])+/g;
+  wordRegex = new RegExp(wordRegexString, "g");
+  const words = messageText.match(wordRegex);
+  return words;
+}
+var ModuleChatFilter = class extends ModuleBase {
+  onMessage(ctx) {
+    const { message = null, user, kv = null } = ctx;
+    const userName = user.username;
+    UserChatInfo.sendPendingNotices(ctx, userName);
+  }
+  onMessageTransform(ctx) {
+    const { message, user, kv = null } = ctx;
+    const words = splitMessageText(message.orig);
+    let newMessage = message.orig;
+    let foundBadWords = [];
+    const result = {
+      badWords: [],
+      veryBadWords: [],
+      spam: false
+    };
+    foundBadWords = searchBadWord(words, SETTINGS.chatBadWords, SETTINGS.chatFuzzyScoreForBW);
+    if (foundBadWords.length > 0) {
+      foundBadWords.forEach((bw) => {
+        let newWord = bw.slice(0, 1);
+        newWord = newWord.padEnd(bw.length, ".");
+        newMessage = newMessage.replaceAll(bw, newWord);
+        message.setBody(newMessage);
+        result.badWords = foundBadWords;
+        result.spam = true;
+      });
+    }
+    foundBadWords = searchBadWord(words, SETTINGS.chatVeryBadWords, SETTINGS.chatFuzzyScoreForVBW);
+    if (foundBadWords.length > 0) {
+      message.setSpam(true);
+      const n = user.username + " " + SETTINGS.chatNoticeToUserVBW;
+      UserChatInfo.addPendingNotice(ctx, user.username, n);
+      result.badWords = foundBadWords;
+      result.spam = true;
+    }
+    return result;
+  }
+  chatCowSay(ctx, messageText) {
+    const { message } = ctx;
+    let spam = false;
+    if (messageText.length > 0) {
+      const words = splitMessageText(messageText);
+      let foundBadWords = [];
+      foundBadWords = searchBadWord(words, SETTINGS.chatBadWords, SETTINGS.chatFuzzyScoreForBW);
+      if (foundBadWords.length > 0) {
+        spam = true;
+      } else {
+        foundBadWords = searchBadWord(words, SETTINGS.chatVeryBadWords, SETTINGS.chatFuzzyScoreForVBW);
+        if (foundBadWords.length > 0) {
+          spam = true;
+        }
+      }
+    }
+    if (!spam) {
+      const newMessage = "\n" + (0, import_cowsayjs2.cowsay)(messageText).replaceAll(" ", "\xA0");
+      message.setBody(newMessage);
+      message.setFont("Courier" /* Courier */);
+      message.setColor("black");
+      message.setBgColor("linear-gradient(to right, rgba(128, 0, 128, 0.2) 20%, rgba(128, 0, 128, 0.4) 73%, rgba(128, 0, 128, 0.2))");
+      message.setSpam(false);
+    }
+  }
+};
+
+// src/js/command/command-chat.mts
+var AVAILABLE_USER_COMMANDS3 = [
+  {
+    name: "cowsay",
+    capabilities: 256 /* cowsay */,
+    transform: true,
+    func: cliCowSay,
+    help: "A cow in a chatroom..."
+  }
+];
+function init7() {
+  extendAvaillableUserCommands(AVAILABLE_USER_COMMANDS3);
+}
+function cliCowSay(ctx, args) {
+  const { message = null, user = null, room = null, kv = null } = ctx;
+  let messageText = "";
+  if (args.length >= 1) {
+    messageText = args.join(" ");
+  }
+  const chatFilter = ModuleChatFilter.getFromKV(ctx);
+  chatFilter.chatCowSay(ctx, messageText);
+  chatFilter.storeToKV(ctx);
+}
+
 // src/js/command/command-processor.mts
 function createCommandsList() {
   init5();
@@ -2147,6 +4733,7 @@ function createCommandsList() {
   init3();
   init4();
   init6();
+  init7();
   init2();
 }
 var AVAILABLE_STAFF_COMMANDS2 = [];
@@ -2161,13 +4748,18 @@ function extendAvaillableUserCommands(commandList) {
     AVAILABLE_USER_COMMANDS.push(command);
   });
 }
-function commandProcessor(ctx) {
+function commandProcessor(ctx, transform = false) {
   const { message, user, room = null, kv = null } = ctx;
   const userCap = getUserCapabilities(user);
   function loopOnAvailableCommands(availableCommands, origBody2) {
     const elements = origBody2.split(" ");
     const commandName = elements[1];
     const subCommand = elements[2];
+    const result = {
+      newMessageObj: {},
+      transform: false,
+      cmdFound: false
+    };
     let cmdFound = false;
     availableCommands.forEach((c) => {
       if (c.name === commandName && (c.capabilities & userCap) === c.capabilities) {
@@ -2184,21 +4776,29 @@ function commandProcessor(ctx) {
             cliInfo.subCommand = c.subCommand;
           }
           cmdFound = true;
-          c.func(ctx, args, cliInfo);
+          if (c.transform === void 0 && transform === false || c.transform === transform) {
+            result.newMessageObj = c.func(ctx, args, cliInfo);
+            result.cmdFound = true;
+            if (transform) {
+              result.transform = true;
+            }
+            return result;
+          }
         }
       }
     });
     if (!cmdFound) {
       printCommandResult(ctx, "Command not found !", NOTICE_COLOR_THEME.error);
+      return result;
     }
   }
   const origBody = message.orig.trim();
   if (origBody[0] === COMMAND_START_CHAR) {
     createCommandsList();
     if (origBody.startsWith(SETTINGS.cliBaseStaffCommand)) {
-      loopOnAvailableCommands(AVAILABLE_STAFF_COMMANDS2, origBody);
+      return loopOnAvailableCommands(AVAILABLE_STAFF_COMMANDS2, origBody);
     } else if (origBody.startsWith(SETTINGS.cliBaseUserCommand)) {
-      loopOnAvailableCommands(AVAILABLE_USER_COMMANDS, origBody);
+      return loopOnAvailableCommands(AVAILABLE_USER_COMMANDS, origBody);
     }
   }
 }
@@ -2227,6 +4827,7 @@ function onMessageTransform(ctx) {
     } else if (origBody.startsWith(SETTINGS.cliBaseUserCommand) && !SETTINGS.cliBroadcastUserCmd) {
       message.setSpam(true);
     }
+    commandProcessor(ctx, true);
   } else {
     const chatFilter = ModuleChatFilter.getFromKV(ctx);
     chatFilter.onMessageTransform(ctx);
