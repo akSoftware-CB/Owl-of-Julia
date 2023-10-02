@@ -1,0 +1,15 @@
+
+{
+    "comments": false,
+    "presets": [
+      ["@babel/env", {
+        "targets": {
+          "node": "18.18.0"
+        }
+      }]
+    ],
+    "plugins": [
+      "@babel/plugin-transform-class-properties",
+      "@babel/plugin-transform-spread"
+    ]
+}
