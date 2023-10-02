@@ -2838,6 +2838,7 @@ var SETTINGS = getSettings();
 updateSettings();
 
 // src/js/tool/tool.mts
+var SPACE_NON_SECABLE = "\xA0";
 function getRandomInt(min, max) {
   const tMin = Math.ceil(min);
   const tMax = Math.floor(max);
@@ -3975,13 +3976,14 @@ function cliHelpShowHelp(ctx) {
   const userCap = getUserCapabilities(user);
   function loopOnAvailableCommands(availableCommands, baseCmd) {
     let message2 = "";
+    const arrow = `${SPACE_NON_SECABLE}${SPACE_NON_SECABLE}\u27A1${SPACE_NON_SECABLE}${SPACE_NON_SECABLE}`;
     availableCommands.forEach((c) => {
       if ((c.capabilities & userCap) === c.capabilities) {
         if (c.subCommand === void 0) {
-          message2 = `${message2} ${baseCmd} ${c.name} 	 -> ${c.help} 
+          message2 = `${message2} ${baseCmd} ${c.name} ${arrow} ${c.help} 
 `;
         } else {
-          message2 = `${message2} ${baseCmd} ${c.name} ${c.subCommand} 	 -> ${c.help} 
+          message2 = `${message2} ${baseCmd} ${c.name} ${c.subCommand} ${arrow} ${c.help} 
 `;
         }
       }
@@ -4710,7 +4712,7 @@ var ModuleChatFilter = class extends ModuleBase {
       }
     }
     if (!spam) {
-      const newMessage = "\n" + (0, import_cowsayjs2.cowsay)(messageText, { cow: SETTINGS.cowsayCowName }).replaceAll(" ", "\xA0");
+      const newMessage = "\n" + (0, import_cowsayjs2.cowsay)(messageText, { cow: SETTINGS.cowsayCowName }).replaceAll(" ", SPACE_NON_SECABLE);
       message.setBody(newMessage);
       message.setFont("Courier" /* Courier */);
       message.setColor(SETTINGS.cowsayColor);

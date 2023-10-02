@@ -1,6 +1,7 @@
 import { CBcontext } from "../cb/cb-api.mjs";
 import { printCommandResult, NOTICE_COLOR_THEME } from "../cli/cli-print.mjs";
 import { SETTINGS } from "../settings.mjs";
+import { SPACE_NON_SECABLE } from "../tool/tool.mjs";
 import { getUserCapabilities } from "../user-management.mjs";
 import { AVAILABLE_STAFF_COMMANDS, AVAILABLE_USER_COMMANDS, CommandInfoStore, extendAvaillableStaffCommands, extendAvaillableUserCommands } from "./command-processor.mjs";
 
@@ -23,13 +24,14 @@ function cliHelpShowHelp(ctx: CBcontext) {
 
     function loopOnAvailableCommands(availableCommands: CommandInfoStore, baseCmd: string) {
         let message = '';
+        const arrow = `${SPACE_NON_SECABLE}${SPACE_NON_SECABLE}➡${SPACE_NON_SECABLE}${SPACE_NON_SECABLE}`
         availableCommands.forEach(c => {
             if ((c.capabilities & userCap) === c.capabilities) {
                 if (c.subCommand === undefined) {
-                    message = `${message} ${baseCmd} ${c.name} \t -> ${c.help} \n`
+                    message = `${message} ${baseCmd} ${c.name} ${arrow} ${c.help} \n`
     
                 } else {
-                    message = `${message} ${baseCmd} ${c.name} ${c.subCommand} \t -> ${c.help} \n`
+                    message = `${message} ${baseCmd} ${c.name} ${c.subCommand} ${arrow} ${c.help} \n`
                 }    
             }
         }); 

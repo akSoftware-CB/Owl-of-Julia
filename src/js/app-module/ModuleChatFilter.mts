@@ -1,5 +1,6 @@
 import { CBFonts, CBcontext } from "../cb/cb-api.mjs";
 import { SETTINGS } from "../settings.mjs";
+import { SPACE_NON_SECABLE } from "../tool/tool.mjs";
 import { ModuleBase } from "./ModuleBase.mjs";
 import { UserChatInfo } from "./UserChatInfo.mjs";
 import { cowsay } from "cowsayjs";
@@ -233,7 +234,7 @@ class ModuleChatFilter extends ModuleBase {
         }
         
         if (!spam) {
-            const newMessage: string = '\n' + cowsay(messageText, {cow: SETTINGS.cowsayCowName}).replaceAll(' ','\u00A0');
+            const newMessage: string = '\n' + cowsay(messageText, {cow: SETTINGS.cowsayCowName}).replaceAll(' ',SPACE_NON_SECABLE);
             message.setBody(newMessage);
             message.setFont(CBFonts.Courier);
             message.setColor(SETTINGS.cowsayColor);

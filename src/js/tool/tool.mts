@@ -1,4 +1,6 @@
 
+const SPACE_NON_SECABLE = '\u00A0';
+
 type EpochMs = number;
 
 type GenericID = string;
@@ -39,8 +41,12 @@ function getObjectProperty(obj: object, prop: string, defaultValue: unknown = nu
     }
 }
 
-
-export {getRandomID, EpochMs, SessionID, GenericID, getObjectProperty};
-export interface KeyMap {
+interface KeyMap {
     [key: string]: GenericID;
 }
+
+export {
+    EpochMs, SessionID, GenericID, KeyMap,
+    SPACE_NON_SECABLE,
+    getRandomID, getObjectProperty, 
+};
